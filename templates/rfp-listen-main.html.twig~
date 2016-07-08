@@ -1,0 +1,56 @@
+<!-- Radio Free Peterborough Listen Page -->
+{{ attach_library('rfp_listen/rfp-listener') }}
+
+<article class="contextual-region node node--id-1 node--type-page node--view-mode-full" about="/listen" typeof="schema:WebPage">
+    <div class="node__container">
+        <header class="node__header">  
+    <span property="schema:name" content="Listen to Radio Free Peterborough" class="rdf-meta hidden"></span>
+          </header>
+
+    <div class="node__content">
+      <div property="schema:text" class="clearfix text-formatted field field-node--body field-name-body field-type-text-with-summary field-label-hidden">
+    <div class="field__items">
+          <!-- begin main content wrapper -->
+          <div  class="field__item">
+
+			  <rfp-listen></rfp-listen>
+
+              <div class="debug">
+
+
+
+                    Data Source: {{data_source}}<br/>
+                  
+              
+              </div>
+              
+              <h3>Roadmap</h3>
+              <ul>
+                <li>Init theplayer with an artist, recording and track</li>
+                <li>Allow user to create playlists ( add track, reorder tracks, remove tracks, clone playlist )</li>
+                <li>Build player and pull playlists</li>
+                <li>Widget for Album Info / Link</li>
+                <li>Widget for Artist Info / Link</li>
+                <li>Play everything by this Artist</li>
+                <li>Play this Recording</li>
+                <li>Play this Track</li>
+                <li>User can skip this track (just like songza)</li>
+                <li>Show album art while playing</li>
+                <li>Should allow for a popout player in its own window</li>
+                <li>Player Widget should be decoupled so it can be ported over to LCMP</li>
+                <li>should allow for download of music if available</li>
+                  
+              </ul>
+            
+          </div>
+        <!-- end main content wrapper -->
+      </div>
+</div>
+
+    </div>
+
+  
+
+</div></article>
+
+

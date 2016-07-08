@@ -1,0 +1,287 @@
+/* Set up the RFP Listener Page Widgets */
+( function($) {
+   
+    $(document).ready( function() { 
+               
+	   xtag.register( 'rfp-listen',  {
+		 
+		lifecycle: { 
+		  
+			created: function() { 
+                
+                $('#loading').hide(); // hide the loading message
+                
+                if( drupalSettings.rfplisten.debug == 1 ) {
+				  
+                   // console.log("DEBUG MODE");   
+                }
+                else { // hide the debug message..
+                    
+                    $('#debug').hide();  
+                }
+                
+                this.init( );   	
+			}
+		},
+		content: function() { 
+		 /*
+			<audio controls id="rfp-hidden-player" style="display: none;">
+			 
+				Your browser does not support the audio element.
+			</audio>
+
+		<div id="rfp-recording-cover"></div>
+		<div id="rfp-track-details">
+
+		 <h1 id="rfp-track-title" ></h1>
+		 <h2><span id="rfp-track-recording-name"></span> - <span id="rfp-track-artist-name"></span></h2>
+		 
+	  </div>
+	  <div style="clear: both;"></div>
+		 
+         
+         <div id="related">related stuff goes here..</div>	
+         <a id="randtest">Rand test</a>  &nbsp;&nbsp;   <a id="playtest">Play test</a>
+		 */
+		},
+        methods: {
+         
+           init: function() { 
+            
+			this.artists_by_nid     = new Array();
+			this.artists_by_name    = new Array();
+			this.recordings 	 	= new Array();
+			
+			var tracks = new Array();
+			this.tracks = [ ];
+
+			// Build our data
+			var artists = drupalSettings.rfplisten.artists[ 'artists' ];
+		
+			for( var artistIndex in artists ) {
+			  
+				var name = artists[ artistIndex ]['name'];
+				var nid  = artists[ artistIndex ]['nid'];
+				
+				this.artists_by_nid[ nid ]   = name;
+				this.artists_by_name[ name ] = nid;
+			}
+			
+			var tracks = [];
+			var track_count = Object.keys( drupalSettings.rfplisten.tracks ).length;
+			var random_track = Math.floor( Math.random() * Object.keys( drupalSettings.rfplisten.tracks ).length );
+			var init_track = null;
+					
+			for( var trackIndex in drupalSettings.rfplisten.tracks ) {
+					  
+			  var t = {}; 
+			  t.trackname 	= drupalSettings.rfplisten.tracks[trackIndex]['title'];
+			  t.tracknid  	= drupalSettings.rfplisten.tracks[trackIndex]['nid'];
+			  t.track_num 	= drupalSettings.rfplisten.tracks[trackIndex]['track_number'];
+			  t.track_mp3 	= drupalSettings.rfplisten.tracks[trackIndex]['mp3'];
+			  t.recording_nid = drupalSettings.rfplisten.tracks[trackIndex]['recording'];
+			  t.recording_title = drupalSettings.rfplisten.tracks[trackIndex]['recording_title'];
+			  t.recording_cover = drupalSettings.rfplisten.tracks[trackIndex]['recording_cover'];
+			  t.artist_nid 	= drupalSettings.rfplisten.tracks[trackIndex]['artist_nid'];
+			  t.artist_name = drupalSettings.rfplisten.tracks[trackIndex]['artist_name'];
+			  
+			  if( !t.recording_nid || !t.artist_nid ) { continue; }
+			  
+			  tracks.push( t );
+			  
+			  if( trackIndex == random_track ) {
+				  init_track = t.tracknid;   
+			  }	
+			}
+					
+			this.tracks = tracks;
+					
+			// initialize the player 
+			this.setTrack( init_track );
+			
+			window.rfp = this;
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			},
+					  
+			showCurrentTrack: function() {
+			  
+		
+				jQuery('#rfp-track-title').text( this.currentTrack.title );
+				jQuery('#rfp-track-artist-name').text( this.currentTrack.artist_name );
+				jQuery('#rfp-track-recording-name').text( this.currentTrack.recording_title );
+
+				var player = document.getElementById( 'rfp-hidden-player' );
+				player.setAttribute( 'src', this.currentTrack.mp3 );
+				
+				// Set up the cover image...
+				jQuery('#rfp-recording-cover').empty();
+				var img = '<img src="'+ this.currentTrack.recording_cover +'" alt="' + this.currentTrack.recording_title + '" />';
+				jQuery('#rfp-recording-cover').append( img );
+				
+				
+				
+				
+				
+				
+                //console.log( "Show current track: " + this.currentTrack.title + ' by ' + this.currentTrack.artist + ' with track ' + this.currentTrack.mp3);   
+            },
+					  
+            play: function( ) { 
+                
+                // play a track    
+            },
+            pause: function( ) { 
+            
+            },
+            setTrack: function( id ) {
+                
+                this._fetch_track( id ); 
+				
+            },
+            setArtist: function( id ) {
+                
+            },
+            setRecording: function( id ) {
+                
+            },
+            
+            // For future use..
+            setPlaylist: function( id ) { 
+                
+            },
+            
+            _fetch_track: function( id ) {  // Load our track info..
+                
+                this.currentTrackId = id;
+                
+                var data_path = drupalSettings.rfplisten.datasource_tracks + id.toString() + '.json';
+                var parent = this;     
+                $.getJSON(data_path, function( json ) {
+                        parent._init_track( json );
+                });                    
+            },
+            
+            _init_track( track_json ) {
+            
+                this.currentTrack = track_json;
+                this.currentTrackId = track_json.nid;
+                this.showCurrentTrack();
+            },
+			random_track() { 
+			  
+				var track_count = Object.keys( drupalSettings.rfplisten.tracks ).length;
+				var random_track = Math.floor( Math.random() * Object.keys( drupalSettings.rfplisten.tracks ).length );
+			
+				for( var trackIndex in drupalSettings.rfplisten.tracks ) {
+			  
+					if( random_track == trackIndex ) {
+					    return drupalSettings.rfplisten.tracks[trackIndex];
+							
+					}  
+				}
+			},
+					  
+            getTrack: function(id) {
+                console.log( 'ready to grab track ' + id );   
+            },
+            
+            getArtist: function(id, withtracks) {
+                console.log( 'get artist ' + id  + ' if withrtracks ( ' + withtracks + ' ) is set, add track data' );
+                
+            },     
+        },
+           
+        accessors:  {
+            
+            artists_by_nid:    { attribute: {} },
+            artists_by_title:  { attribute: {} },
+                                
+            tracks:     { attribute: {}, get:function() {  }, set:function() {  } },
+            recordings: { attribute: {} },
+         
+            playing: {
+                attribute: {},
+                get:function() {  },
+                set:function( is_playing ) {  }
+            },
+            tracks: { attribute: {}  },
+            currentTrack: {
+                attribute: {},
+                set: function( value ) { 
+                    this.xtag.data.currentTrack = value;
+                    
+                },
+                get: function( ) { return this.xtag.data.currentTrack; } 
+            },
+ 
+           currentTrackId: {
+                attribute: {},
+                get:function() {  },
+               
+                set:function( id ) {  }
+           },
+           currentTrackName: { 
+                attribute: {},
+                get:function() { return this.currentTrackName; },
+                set:function( name ) { this.currentTrackName = name; }
+           }
+        }
+	   });
+	
+	});  	
+	
+	
+	
+	
+	
+
+	
+	
+	
+} ) ( jQuery, Drupal, drupalSettings );
+
+
+document.addEventListener('DOMComponentsLoaded', function(){
+
+  	// Random Track Test
+	jQuery('#randtest').click( function(  ) {  
+	  
+	  var track = window.rfp.random_track();
+	  
+	  window.rfp.currentTrack = track;
+	  window.rfp.currentTrackId = track.nid;
+	  window.rfp.showCurrentTrack();
+	}); 
+	
+		// Random Track Test
+	jQuery('#playtest').click( function(  ) {  
+	
+		//  jQuery('#rfp-hidden-player').play();
+		var player = document.getElementById( 'rfp-hidden-player' );
+		
+		//console.log("Ready to play test on player " + player );
+		player.play();
+	  
+	});
+	
+	
+	
+}, false);
+
+
+
+
+
+
+
+
+

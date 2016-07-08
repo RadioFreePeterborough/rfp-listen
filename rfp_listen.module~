@@ -1,0 +1,45 @@
+<?php
+/**
+ * @file
+ * Module file for page_example_module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+function rfp_listen_theme($existing, $type, $theme, $path) {
+
+
+ 
+  
+  
+  return array(
+    'rfp_listen_main' => array(
+      'variables' => array(
+        'data_source'       => '/rfp/v1/',
+        'init_artist'       => 123,
+        'init_artist_name'  => 'Artist Name Here',
+        
+        'init_recording'        => 321,
+        'init_recording_name'   => 'Recording Name Here',
+        
+        'init_track'        => 99,
+        'init_track_name'   => 'Track Track Track',
+        'init_track_duration' => '00:00:05',
+        'init_track_position' => 1,  // Track Number On Recording...   
+        
+    
+        
+        'autoplay'          => TRUE,
+              
+        
+        
+        
+        
+        ),
+    ),
+  );
+
+}
+
+
+

@@ -1,0 +1,60 @@
+<?php
+
+namespace Drupal\rfp_listen\Controller;
+
+use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+
+class RFPListenController extends ControllerBase {
+
+  public function listen_page() {
+      
+    $build = array(
+        '#theme' 	=> 'rfp_listen_main',
+        '#test_var' => $this->t('Test Value')
+    );
+    
+    $data_source = '/sites/radiofreepeterborough.ca/data/';
+      
+    $build['#attached']['drupalSettings']['rfplisten']['debug'] = 1;      
+    $build['#attached']['drupalSettings']['rfplisten']['datasource'] = $data_source;
+    $build['#attached']['drupalSettings']['rfplisten']['datasource_artists'] = $data_source . 'artists.json';
+    $build['#attached']['drupalSettings']['rfplisten']['datasource_tracks'] = $data_source . '/tracks/';  
+        
+    // What if we pull all of the data in as JSON?  
+    $artist_file = DRUPAL_ROOT . '/sites/' . \Drupal::request()->getHost() .'/data/artists.json';
+    $tracks_file = DRUPAL_ROOT . '/sites/' . \Drupal::request()->getHost() .'/data/tracks.json'; 
+      
+    $build['#attached']['drupalSettings']['rfplisten']['artists'] = json_decode( file_get_contents( $artist_file ));
+    $build['#attached']['drupalSettings']['rfplisten']['tracks' ] = json_decode( file_get_contents( $tracks_file ));
+
+	$build['#attached']['drupalSettings']['rfplisten']['init_track' ] = \Drupal\rfp_listen\Controller\RFPListenController::_random_track();
+
+    return $build;  
+  } 
+
+  // pick a track - any track 
+  public function _random_track( ) {
+
+	  $result = db_select( 'node', 'n' )
+		->fields( 'e', array( 'nid' ))
+		->condition( 'n.type', 'track')
+		->orderBy( 'n.nid', 'RAND()' )
+		->addTag( 'node_access')
+		->range( 0,1)->execute();
+
+	  drupal_set_message("did we find a random track?");
+
+	  //foreach( $result as $rec ) { 
+	//		drupal_set_message("GOT REC $rec");
+	 // }
+
+	  return 12345;
+
+  } 
+
+}
+
+?>

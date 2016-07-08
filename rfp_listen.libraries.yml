@@ -1,0 +1,12 @@
+rfp-listener:
+  version: 0.1.x
+  js:
+    http://spin.js.org/spin.min.js  : { type: external, minified: true }
+    js/x-tag-core.min.js: {}
+    js/rfp_listen.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.ui
+    - core/jquery.ui.spinner
+    - core/drupal
+    - core/drupalSettings

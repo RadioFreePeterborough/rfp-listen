@@ -1,0 +1,6 @@
+{
+   "name": "Drupal/rfp_listen",
+    "description": "Listen Page for Radio Free Peterborough ",
+    "type": "drupal-module",
+    "license": "GPL-2.0+"
+}

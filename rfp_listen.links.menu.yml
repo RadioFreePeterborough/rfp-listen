@@ -1,0 +1,14 @@
+
+rfp_listen.listen:
+  title: Listen
+  route_name: rfp_listen_page
+  expanded: TRUE
+
+
+#page_example.simple:
+#  title: Simple - no arguments
+#  route_name: page_example_simple
+#  parent: page_example.description
+
+# We can't define a menu link for the page_example_arguments route, because it
+# requires path arguments.

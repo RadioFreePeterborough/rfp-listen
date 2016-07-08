@@ -1,0 +1,7 @@
+rfp_listener:
+  version: 0.1.x
+  js:
+    js/x-tag-core.min.js: {}
+    js/rfp_listen.js: {}
+
+
