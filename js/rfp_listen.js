@@ -1,8 +1,38 @@
+/*global document: false */
 /* Set up the RFP Listener Page Widgets */
-( function($) {
+    
+document.spinner_opts =  {
+    lines: 11, // The number of lines to draw
+    length: 10, // The length of each line
+    width: 16, // The line thickness
+    radius: 42, // The radius of the inner circle
+    scale: 0.75, // Scales overall size of the spinner
+    corners: 1, // Corner roundness (0..1)
+    color: '#000', // #rgb or #rrggbb or array of colors
+    opacity: 0.25, // Opacity of the lines
+    rotate: 0, // The rotation offset
+    direction: 1, // 1: clockwise, -1: counterclockwise
+    speed: 1, // Rounds per second
+    trail: 60, // Afterglow percentage
+    fps: 20, // Frames per second when using setTimeout() as a fallback for CSS
+    zIndex: 2e9, // The z-index (defaults to 2000000000)
+    className: 'spinner', // The CSS class to assign to the spinner
+    top: '50%', // Top position relative to parent
+    left: '50%', // Left position relative to parent
+    shadow: true, // Whether to render a shadow
+    hwaccel: true, // Whether to use hardware acceleration
+    position: 'absolute' // Element positioning
+};
+
+document.spinner = new Spinner(document.spinner_opts).spin(document.body);
+    
+
+(function ($) {
    
     $(document).ready( function() { 
-                   
+        
+       'use strict';  
+        
 	   xtag.register( 'rfp-listen',  {
 		 
 		lifecycle: { 
@@ -63,129 +93,72 @@
         methods: {
          
            init: function() { 
-            
+               
+               window.rfp = this;
                var mode = drupalSettings.rfplisten.mode;
+               this.queue = []; // our central playback queue - only holds node ids 
                
-               if( drupalSettings.rfplisten.debug == 1 ) {
-               
-                console.log('begin init in mode ' + mode );
-                   
+               switch( mode ) {
+                       
+                    case 'random':
+                    default: 
+                        this.init_random_mode();
+                       
                }
                
-               
-               
-               var parent = this;
-               //$.getJSON( 
-               
-               
-                //this.artists_by_nid     = new Array();
-                //this.artists_by_name    = new Array();
-               // this.recordings 	 	= new Array();
-                
-                //var tracks = new Array();
-                //this.tracks = [ ];
-                
-                // Load the tracks from the static data source
-                
-               
-               
-               
-               /*
-    
-                // Build our data
-                var artists = drupalSettings.rfplisten.artists[ 'artists' ];
-            
-                for( var artistIndex in artists ) {
-                  
-                    var name = artists[ artistIndex ]['name'];
-                    var nid  = artists[ artistIndex ]['nid'];
-                    
-                    this.artists_by_nid[ nid ]   = name;
-                    this.artists_by_name[ name ] = nid;
-                }
-                
-                var tracks = [];
-                var track_count = Object.keys( drupalSettings.rfplisten.tracks ).length;
-                var random_track = Math.floor( Math.random() * Object.keys( drupalSettings.rfplisten.tracks ).length );
-                var init_track = null;
-                        
-                for( var trackIndex in drupalSettings.rfplisten.tracks ) {
-                          
-                  var t = {}; 
-                  t.trackname       = drupalSettings.rfplisten.tracks[trackIndex]['title'];
-                  t.tracknid        = drupalSettings.rfplisten.tracks[trackIndex]['nid'];
-                  t.track_num       = drupalSettings.rfplisten.tracks[trackIndex]['track_number'];
-                  t.track_mp3       = drupalSettings.rfplisten.tracks[trackIndex]['mp3'];
-                  t.recording_nid   = drupalSettings.rfplisten.tracks[trackIndex]['recording'];
-                  t.recording_title = drupalSettings.rfplisten.tracks[trackIndex]['recording_title'];
-                  t.recording_cover = drupalSettings.rfplisten.tracks[trackIndex]['recording_cover'];
-                  t.artist_nid 	    = drupalSettings.rfplisten.tracks[trackIndex]['artist_nid'];
-                  t.artist_name     = drupalSettings.rfplisten.tracks[trackIndex]['artist_name'];
-                  
-                  if( !t.recording_nid || !t.artist_nid ) { continue; }
-                  
-                  tracks.push( t );
-                  
-                  if( trackIndex == random_track ) {
-                      init_track = t.tracknid;   
-                  }	
-                }
-                        
-                this.tracks = tracks;
-                        
-                // initialize the player 
-                this.setTrack( init_track );
-                
-                */
-                
-                window.rfp = this;
-               
-                this.resetButtonBar();
-               
-               
-             
+               this.resetButtonBar();
 			},
-            
-            resetButtonBar: function() {
              
+            init_random_mode: function() {
                 
+                // grab 25 random songs 
+                var data_path = drupalSettings.rfplisten.datasource_random_tracks;
+                parent = this;
                 
-                // Random Track
-                var rand = document.createElement( 'a' );
-                var linkText = document.createTextNode( 'Random Track' );
-                rand.appendChild(linkText);
-                rand.addEventListener( 'click', function() { document.rand_test(); } );
+                $.get( data_path + '25',  function( data ) { 
+                    
+                    parent.queue = JSON.parse( data );
+                    parent.queue_index = 0;
+                    
+                    document.spinner.stop(); 
+                    parent.play_queue(); 
+                });
+            },
+            play_queue: function() {
                 
-                
-                $('#rfp-buttonbar').append( rand  );
-                
-                // Play 
-                var play = document.createElement( 'a' );
-                var linkText = document.createTextNode( 'Play Track' );
-                play.appendChild( linkText );
-                play.addEventListener( 'click', function() { document.play_test(); } );
-                
-                $('#rfp-buttonbar').append( play );
-                
+                var t = this.queue[ this.queue_index ];
+                this._init_track( t );
+            },
             
+            queue_next_track: function() {
+             
+                var next_index = parseInt( this.queue_index ) + 1;
                 
+                // is there a next track?  if not, start over...
+                if( next_index > this.queue.length - 1 ) {
                 
+                    this.queue_index = next_index = 0;
+                }
                 
-                
-                
-                
-                /*
-                var a = document.createElement('a');
-var linkText = document.createTextNode("my title text");
-a.appendChild(linkText);
-a.title = "my title text";
-a.href = "http://example.com";
-document.body.appendChild(a);
-                */
+                return this.queue[ next_index ];  
             },
             
             
-					  
+            
+            
+           
+            
+            // Overwrite the existing queue - then load up the first track in the queue
+            resetQueue: function( newqueue ) {
+                
+            },
+            // Skip ahead / behind in the queue 
+            queueSkipTo: function( address ) {
+                
+                // TODO - ensure we have enough queue entries to accommodate this request
+            },
+           
+            		  
 			showCurrentTrack: function() {
                 
                 $('#TODO').hide();
@@ -244,36 +217,9 @@ document.body.appendChild(a);
                 $(cover).css( 'display', 'none' );
                 
 				jQuery('#rfp-recording-cover').append( cover );
-				
-                
-                
-                
+  
             },
-					  
-            play: function( ) { 
-                
-                // play a track    
-            },
-            pause: function( ) { 
-            
-            },
-            setTrack: function( id ) {
-                
-                this._fetch_track( id ); 
-				
-            },
-            setArtist: function( id ) {
-                
-            },
-            setRecording: function( id ) {
-                
-            },
-            
-            // For future use..
-            setPlaylist: function( id ) { 
-                
-            },
-            
+				 
             _fetch_track: function( id ) {  // Load our track info..
                 
                 this.currentTrackId = id;
@@ -285,70 +231,59 @@ document.body.appendChild(a);
                 });                    
             },
             
-            _init_track( track_json ) {
+            _init_track: function( track_json ) {
             
                 this.currentTrack = track_json;
                 this.currentTrackId = track_json.nid;
                 this.showCurrentTrack();
             },
-			random_track() { 
-			  
-				var track_count = Object.keys( drupalSettings.rfplisten.tracks ).length;
-				var random_track = Math.floor( Math.random() * Object.keys( drupalSettings.rfplisten.tracks ).length );
-			
-				for( var trackIndex in drupalSettings.rfplisten.tracks ) {
-			  
-					if( random_track == trackIndex ) {
-					    return drupalSettings.rfplisten.tracks[trackIndex];
-							
-					}  
-				}
-			},
-					  
-            getTrack: function(id) {
-                console.log( 'ready to grab track ' + id );   
+            
+            resetButtonBar: function() {
+         
+                // Random Track
+                var rand = document.createElement( 'a' );
+                var linkText = document.createTextNode( 'Random Track' );
+                rand.appendChild(linkText);
+                rand.addEventListener( 'click', function() { document.rand_test(); } );
+                 
+                $('#rfp-buttonbar').append( rand  );
+                
+                // Play 
+                var play = document.createElement( 'a' );
+                var linkText = document.createTextNode( 'Play Track' );
+                play.appendChild( linkText );
+                play.addEventListener( 'click', function() { document.play_test(); } );
+                
+                $('#rfp-buttonbar').append( play );
+                
+                // Dump queue 
+                var dump_q = document.createElement( 'a' );
+                var linkText = document.createTextNode( 'Dump Queue' );
+                dump_q.appendChild( linkText );
+                
+                dump_q.addEventListener( 'click', function() { document.qump_queue(); } );
+                
+                $('#rfp-buttonbar').append( dump_q );
+                
+                
+                
+                
+                
             },
             
-            getArtist: function(id, withtracks) {
-                console.log( 'get artist ' + id  + ' if withrtracks ( ' + withtracks + ' ) is set, add track data' );
-                
-            },     
+		
         },
+            
+       
+            
            
         accessors:  {
             
+            queue_index: { attribute: {} },
+            
             artists_by_nid:    { attribute: {} },
             artists_by_title:  { attribute: {} },
-                                
-            tracks:     { attribute: {}, get:function() {  }, set:function() {  } },
-            recordings: { attribute: {} },
-         
-            playing: {
-                attribute: {},
-                get:function() {  },
-                set:function( is_playing ) {  }
-            },
-            tracks: { attribute: {}  },
-            currentTrack: {
-                attribute: {},
-                set: function( value ) { 
-                    this.xtag.data.currentTrack = value;
-                    
-                },
-                get: function( ) { return this.xtag.data.currentTrack; } 
-            },
- 
-           currentTrackId: {
-                attribute: {},
-                get:function() {  },
-               
-                set:function( id ) {  }
-           },
-           currentTrackName: { 
-                attribute: {},
-                get:function() { return this.currentTrackName; },
-                set:function( name ) { this.currentTrackName = name; }
-           }
+            
         }
 	   });
 	
@@ -357,7 +292,8 @@ document.body.appendChild(a);
 	
     document.rand_test = function() {
      
-         var track = window.rfp.random_track();
+         //var track = window.rfp.random_track();
+         var track = window.rfp.queue_next_track();
 	  
           window.rfp.currentTrack = track;
           window.rfp.currentTrackId = track.nid;
@@ -369,6 +305,17 @@ document.body.appendChild(a);
 		document.getElementById( 'rfp-hidden-player' ).play();
     }
     
+    document.qump_queue = function() {
+     
+        console.log( 'dumping queue...');
+        for( var t in window.rfp.queue ) {
+         
+            console.log( "Q FILE: " + window.rfp.queue[t].title );
+        }
+        
+        
+        
+    }
 	
 	
 	
@@ -378,33 +325,6 @@ document.body.appendChild(a);
 	
 } ) ( jQuery, Drupal, drupalSettings );
 
-
-document.addEventListener('DOMComponentsLoaded', function(){
-
-  	// Random Track Test
-	jQuery('#randtest').click( function(  ) {  
-	  
-	  var track = window.rfp.random_track();
-	  
-	  window.rfp.currentTrack = track;
-	  window.rfp.currentTrackId = track.nid;
-	  window.rfp.showCurrentTrack();
-	}); 
-	
-		// Random Track Test
-	jQuery('#playtest').click( function(  ) {  
-	
-		//  jQuery('#rfp-hidden-player').play();
-		var player = document.getElementById( 'rfp-hidden-player' );
-		
-		//console.log("Ready to play test on player " + player );
-		player.play();
-	  
-	});
-	
-	
-	
-}, false);
 
 
 
