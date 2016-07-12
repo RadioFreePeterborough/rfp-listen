@@ -59,6 +59,8 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 				Your browser does not support the audio element.
 			</audio>
        <div id="rfp-wrapper"> 
+        <a id="queue-toggle">[||]</a>
+        <div id="rfp-queue">We are the queue.... <a id="queue-toggle-inqueue">[||]</a></div>
 		<div id="rfp-recording-cover"></div>
 		<div id="rfp-track-details">
 
@@ -102,8 +104,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                        
                     case 'random':
                     default: 
-                        this.init_random_mode();
-                       
+                        this.init_random_mode();      
                }
                
                this.resetButtonBar();
@@ -117,7 +118,8 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 
                 $.get( data_path + '25',  function( data ) { 
                     
-                    parent.queue = JSON.parse( data );
+                   // parent.queue = JSON.parse( data );
+                    parent.reset_queue( JSON.parse( data ));
                     parent.queue_index = 0;
                     
                     document.spinner.stop(); 
@@ -139,21 +141,86 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 
                     this.queue_index = next_index = 0;
                 }
-                
+                else {
+                 
+                    this.queue_index = next_index;
+                }
+            
                 return this.queue[ next_index ];  
             },
             
-            
-            
-            
-           
-            
             // Overwrite the existing queue - then load up the first track in the queue
-            resetQueue: function( newqueue ) {
+            reset_queue: function( newqueue ) {
                 
+                this.queue = newqueue;
+            
+                $('#rfp-queue').empty();
+				
+				// Add back the close button..
+				var queuetoggle = $('A#queue-toggle' ).clone( true );
+				queuetoggle.className = 'rfp-in-queue-toggle';
+				$(queuetoggle).css( 'position', 'relative' );
+				
+				$(queuetoggle).css( 'left', '5px' );
+				$(queuetoggle).text( '[ X ]' );
+				
+				$('#rfp-queue').append( queuetoggle );
+				
+                var tracks = document.createElement('ul');
+				tracks.className = 'rfp-queue-tracks';
+            
+                var counter = 0;
+                
+                for( var t in this.queue ) {
+                    
+                    var parent = this;
+                    var track = document.createElement('li');
+                    tracks.appendChild( track );
+					
+					var trackid = 'track_' + this.queue[t].nid + '_in_position_' + counter; 
+                    track.setAttribute( 'id', trackid ); 
+					track.className += 'rfp-queue-track';
+					
+					var title = this.queue[t].title;
+					// Truncate long titles..
+					if( title.length > 45 ) {
+						title = title.substring( 0, 45 ) + '...';
+					}
+					
+                    
+                    track.innerHTML = '<img  id="' + trackid + '" src="' + this.queue[t].recording_cover + '" alt="' + this.queue[t].artist_name + '" class="queue-thumb"/>'
+                    track.innerHTML += '<div id="queue-track-details">' + 
+					  '<span class="queue-details rfp-track-title"><h3>' + title + '</h3></span>' +
+					  '<span class="queue-details rfp-recording-title"><h3>' + this.queue[t].recording_title + '</h3></span>' +
+					  '<span class="queue-details rfp-track-artist">' + this.queue[t].artist_name + '</span></div>';
+                
+                    track.class = 'rfp-queue-track';
+                    track.position = counter;
+					
+					$(track).on( 'click', function() {
+					  
+						var id = $(this).attr('id');  
+						var id_chunks = id.split( '_');
+						var nid = id_chunks[1];
+						var pos = id_chunks[4];
+						
+						window.rfp.queue_skip_to( pos );
+					});
+					
+                    ++counter;
+                }
+               
+                $('#rfp-queue').append( tracks );     
             },
-            // Skip ahead / behind in the queue 
-            queueSkipTo: function( address ) {
+            // Skip ahead / behind in the queue by array index (zero based)
+            queue_skip_to: function( to ) {
+            
+                console.log( "TODO - IS THIS IN BOuNDS????");
+				console.log( "Jump to " + to );
+                this.queue_index = to;
+                this.play_queue(); 
+                
+                
                 
                 // TODO - ensure we have enough queue entries to accommodate this request
             },
@@ -228,17 +295,47 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 var parent = this;     
                 $.getJSON(data_path, function( json ) {
                         parent._init_track( json );
-                });                    
+                });                       
             },
             
             _init_track: function( track_json ) {
-            
+        
                 this.currentTrack = track_json;
                 this.currentTrackId = track_json.nid;
                 this.showCurrentTrack();
             },
             
             resetButtonBar: function() {
+			  
+			   // Hide / Show Queue
+               $('#queue-toggle').click( function() { $('#rfp-queue').slideToggle( 600 ); } );
+                
+               
+			  
+			  // Play Button..
+			  var play_img = document.createElement('IMG');
+			  play_img.src = drupalSettings.rfplisten.images.play;
+			  
+			  var play_btn = document.createElement('a');
+			  play_btn.appendChild( play_img );
+			  play_btn.addEventListener( 'click', function() { alert('play!'); } );
+			  
+			  $('#rfp-buttonbar').append( play_btn );
+			 
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  
+			  
          
                 // Random Track
                 var rand = document.createElement( 'a' );
@@ -246,7 +343,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 rand.appendChild(linkText);
                 rand.addEventListener( 'click', function() { document.rand_test(); } );
                  
-                $('#rfp-buttonbar').append( rand  );
+               // $('#rfp-buttonbar').append( rand  );
                 
                 // Play 
                 var play = document.createElement( 'a' );
@@ -254,7 +351,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 play.appendChild( linkText );
                 play.addEventListener( 'click', function() { document.play_test(); } );
                 
-                $('#rfp-buttonbar').append( play );
+               // $('#rfp-buttonbar').append( play );
                 
                 // Dump queue 
                 var dump_q = document.createElement( 'a' );
@@ -263,9 +360,18 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 
                 dump_q.addEventListener( 'click', function() { document.qump_queue(); } );
                 
-                $('#rfp-buttonbar').append( dump_q );
+               // $('#rfp-buttonbar').append( dump_q );
                 
+                // Show / Hide queue 
+                var show_q = document.createElement( 'a' );
+                var linkText = document.createTextNode( 'Show/Hide Queue' );
+                show_q.appendChild( linkText );
                 
+                show_q.addEventListener( 'click', function() { document.queue_toggle(); } );
+                
+               // $('#rfp-buttonbar').append( show_q );
+                
+               
                 
                 
                 
@@ -292,7 +398,6 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 	
     document.rand_test = function() {
      
-         //var track = window.rfp.random_track();
          var track = window.rfp.queue_next_track();
 	  
           window.rfp.currentTrack = track;
@@ -312,8 +417,12 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
          
             console.log( "Q FILE: " + window.rfp.queue[t].title );
         }
-        
-        
+    }
+    
+    
+    document.queue_toggle = function() {
+     
+        $('#rfp-queue').slideToggle( 600 );
         
     }
 	
