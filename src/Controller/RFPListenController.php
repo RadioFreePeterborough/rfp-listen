@@ -42,6 +42,8 @@ class RFPListenController extends ControllerBase {
     $build['#attached']['drupalSettings']['rfplisten']['datasource_artists'] = $data_source . 'artists.json';
     $build['#attached']['drupalSettings']['rfplisten']['datasource_tracks']  = $data_source . '/tracks/';
 	$build['#attached']['drupalSettings']['rfplisten']['datasource_tracks_by_recording']  = $data_source . '/tracks/by/recording/';
+	
+
 
 	$build['#attached']['drupalSettings']['rfplisten']['datasource_recordings_by_id'] = $data_source . '/recordings/by/id/';
     $build['#attached']['drupalSettings']['rfplisten']['datasource_recordings_by_artist'] = $data_source . '/recordings/by/artist/';

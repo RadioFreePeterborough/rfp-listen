@@ -60,7 +60,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 		 <br/>
 
 		 <br>
+		 <strong>Note: test recording id is 1031 for 389's exit wound traces and test track is 2297 - mama raised a misfit</strong>
          [ TODO: Nice graphical queue close button ] 
+         <br>
+         [ TODO: Add event listener to audio player to fire up next track in queue (if there is one) when track completes ]
 
 		 [ TODO:  Modes:  track, recording, artist, playlist, shuffle ]
          <br>
@@ -110,6 +113,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 				  case 'recording':
 					this.init_recording_mode( id );
 					break;
+					
+				  case 'track':
+					this.init_track_mode( id );
+					break;
 
 
 				  case 'random':
@@ -144,51 +151,78 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 				$.getJSON( recording_url, function (recording_data) { 
 				  
 					var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + recording_id + '.json';
-					console.log( 'fetching tracks from ' + tracks_url );
 					$.getJSON( tracks_url, function( tracks ) {
 					  
 					  var recording_tracks = [];
 					  
 					  for ( var t in tracks ) {
-						//console.log( "Got track " + tracks[t].title );
+						
 						if( !tracks[t].title ) { continue; } 
 						recording_tracks.push( tracks[t] );
-						
 					  }
-					  
-					  //console.log("GOT TRACKS: " + tracks.length );
-					  
-					  
+
 					  parent.reset_queue( recording_tracks);
 					  parent.queue_index = 0;
 					  document.spinner.stop();
 					  parent.play_queue();
-					  
-					  
-					  
+  
 					}).fail( function() { 
 						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
 						parent.init_random_mode();
-						
-					});
-					
-					
-					
-					//console.log("result: " + data.title + ' by ' + data.artist_name  );
-					
-					
-				  
+					});		  
 				})
 				.fail( function() { 
 					alert("Sorry - we were unable to find a recording with that id. Initializing in random mode instead");
 					parent.init_random_mode();
 				});
-				
-				//console.log( "ready to pull from " + recording_url );
-				
-				
+			},
+			
+			init_track_mode: function( track_id ) {
+			  
+			  // Does this track exist?
+			  var track_url = drupalSettings.rfplisten.datasource_tracks + track_id + '.json';
+			  var parent = this;
+			  
+			  $.getJSON( track_url, function( track ) {
+
+				  var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + track.recording + '.json';
+					$.getJSON( tracks_url, function( tracks ) {
+					  
+					  var recording_tracks = [];
+					  var counter = 0;
+					  for ( var t in tracks ) {
+						
+						if( !tracks[t].title ) { continue; } 
+						if( tracks[t].nid == track.nid ) {   // If this is our desired track, set queue index to match
+						  parent.queue_index = counter; 
+						} 
+						
+						recording_tracks.push( tracks[t] );
+						++counter;
+					  }
+
+					  parent.reset_queue( recording_tracks);
+					  		  
+					  document.spinner.stop();
+					  parent.play_queue();
+					  parent.reset_queue_hilight();	
+					  parent.resetButtonBar();
+  
+					}).fail( function() { 
+						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
+						parent.init_random_mode();
+					});	
+			  }).fail( function() {
+					alert("Sorry - we were unable to find a track with that id. Initializing in random mode instead");
+					parent.init_random_mode();
+			  });
+			  
+			  
+			  
+			 
 			  
 			},
+					  
 					  
             play_queue: function() {
 
@@ -218,6 +252,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
             queuetoggle: function( ) { // Show or hide the queue
 
                 $('#rfp-queue').animate( {'width': 'toggle' }, 170  );
+				window.rfp.reset_queue_hilight();
             },
 
             // Overwrite the existing queue - then load up the first track in the queue
@@ -332,7 +367,6 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
                         $(q).animate( {
                             scrollTop: ($(thistrack).height() * parent.queue_index) - 200
-
                         }, 300 );
                     }
 
@@ -358,10 +392,6 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 if( was_playing == 1 ) {
 
                     this.playtoggle();
-
-                  // this.playing = 1;
-                  // document.getElementById( 'rfp-hidden-player' ).play();
-
                 }
             },
 
@@ -369,7 +399,6 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 			showCurrentTrack: function() {
 
                 $('#TODO').hide();
-
 
                 var opts = {
                   lines: 11 // The number of lines to draw
@@ -474,28 +503,21 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
             prev_track: function() {
 
-                if( ! $('#rfp-prev').hasClass( 'disabled' )) {
+                if(!$('#rfp-prev').hasClass( 'disabled' )) {
                       this.queue_skip_to( this.queue_index - 1 );
-                      if( this.playing ) {
-                       //  document.getElementById( 'rfp-hidden-player' ).play();
-                     }
                 }
             },
             next_track: function() {
 
-                 if( ! $('#rfp-next').hasClass( 'disabled' )) {
+                 if(!$('#rfp-next').hasClass( 'disabled' )) {
 
                      this.queue_skip_to(Number(this.queue_index) + 1);
-                     if( this.playing ) {
-                        // document.getElementById( 'rfp-hidden-player' ).play();
-                     }
                 }
             },
 
             resetButtonBar: function() {
 
                 $('#rfp-buttonbar' ).empty();
-
 
                 // Play Button..
                 var play_img = document.createElement('img');
