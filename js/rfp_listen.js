@@ -40,16 +40,6 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 			created: function() {
 
                 $('#loading').hide(); // hide the loading message
-
-                if( drupalSettings.rfplisten.debug == 1 ) {
-
-                   // console.log("DEBUG MODE");
-                }
-                else { // hide the debug message..
-
-                    $('#debug').hide();
-                }
-
                 this.init( );
 			}
 		},
@@ -59,7 +49,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 				Your browser does not support the audio element.
 			</audio>
        <div id="rfp-wrapper">
-        <a id="queue-toggle"></a>
+        <a id="queue-toggle" title="Show the playlist"></a>
         <div id="rfp-queue">We are the queue.... <a id="queue-toggle-inqueue"></a></div>
 		<div id="rfp-recording-cover"></div>
 		<div id="rfp-track-details">
@@ -70,7 +60,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 		 <br/>
 
 		 <br>
-[  TODO: add a hover hilight to queue tracks, and add one to make a hover transparency effect for the queue show button  ]
+         [ TODO: Nice graphical queue close button ] 
 
 		 [ TODO:  Modes:  track, recording, artist, playlist, shuffle ]
          <br>
@@ -93,7 +83,13 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
            init: function() {
 
                window.rfp = this;
-               var mode = drupalSettings.rfplisten.mode;
+			 
+				var mode = this.get_url_param( 'mode' );
+				var id   = Number( this.get_url_param( 'id' ));
+				
+				if( !mode ) { mode = 'random'; } 
+				if( !id || id === 'NaN'  ) id = 0;
+				
                this.queue = []; // our central playback queue - only holds node ids
                this.queue_index = 0;
                var parent = this;
@@ -106,15 +102,19 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 $(i).css( 'width', '40px' );
                 $(i).css( 'height', '40px');
                 $(i).css( 'margin', '5px');
+				
                 $('#queue-toggle').append( i );
-
-
-
+				
                switch( mode ) {
+				 
+				  case 'recording':
+					this.init_recording_mode( id );
+					break;
 
-                    case 'random':
-                    default:
-                        this.init_random_mode();
+
+				  case 'random':
+				  default:
+					  this.init_random_mode();
                }
 
                this.resetButtonBar();
@@ -123,19 +123,73 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
             init_random_mode: function() {
 
                 // grab 25 random songs
-                var data_path = drupalSettings.rfplisten.datasource_random_tracks;
+                var data_path  = drupalSettings.rfplisten.datasource_random_tracks;
+				var rand_count = drupalSettings.rfplisten.datasource_random_tracks_count;
                 parent = this;
 
-                $.get( data_path + '25',  function( data ) {
+                $.get( data_path + rand_count,  function( data ) {
 
-                   // parent.queue = JSON.parse( data );
                     parent.reset_queue( JSON.parse( data ));
                     parent.queue_index = 0;
-
                     document.spinner.stop();
                     parent.play_queue();
                 });
             },
+			init_recording_mode: function( recording_id ) {
+			  
+				// Can we get this recording?
+				var recording_url = drupalSettings.rfplisten.datasource_recordings_by_id + recording_id + '.json';
+				var parent = this;
+				
+				$.getJSON( recording_url, function (recording_data) { 
+				  
+					var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + recording_id + '.json';
+					console.log( 'fetching tracks from ' + tracks_url );
+					$.getJSON( tracks_url, function( tracks ) {
+					  
+					  var recording_tracks = [];
+					  
+					  for ( var t in tracks ) {
+						//console.log( "Got track " + tracks[t].title );
+						if( !tracks[t].title ) { continue; } 
+						recording_tracks.push( tracks[t] );
+						
+					  }
+					  
+					  //console.log("GOT TRACKS: " + tracks.length );
+					  
+					  
+					  parent.reset_queue( recording_tracks);
+					  parent.queue_index = 0;
+					  document.spinner.stop();
+					  parent.play_queue();
+					  
+					  
+					  
+					}).fail( function() { 
+						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
+						parent.init_random_mode();
+						
+					});
+					
+					
+					
+					//console.log("result: " + data.title + ' by ' + data.artist_name  );
+					
+					
+				  
+				})
+				.fail( function() { 
+					alert("Sorry - we were unable to find a recording with that id. Initializing in random mode instead");
+					parent.init_random_mode();
+				});
+				
+				//console.log( "ready to pull from " + recording_url );
+				
+				
+			  
+			},
+					  
             play_queue: function() {
 
                 var t = this.queue[ this.queue_index ];
@@ -219,7 +273,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                     track.innerHTML += '<div id="queue-track-details">' +
 					  '<span class="queue-details rfp-track-title"><h3>' + title + '</h3></span>' +
 					  '<span class="queue-details rfp-recording-title"><h3>' + this.queue[t].recording_title + '</h3></span>' +
-					  '<span class="queue-details rfp-track-artist">' + this.queue[t].artist_name + '</span></div>';
+					  '<span class="queue-details rfp-track-artist"><p>' + this.queue[t].artist_name + '</p></span></div>';
 
                     track.class = 'rfp-queue-track';
                     track.position = counter;
@@ -233,13 +287,26 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 						var nid = id_chunks[1];
 						var pos = id_chunks[4];
 
-                        console.log( "Have " + pos + " vs " + parent.queue_index );
-
                         if( pos == parent.queue_index ) { return; } // do nothing if we click on the current track
-
-						window.rfp.queue_skip_to( pos );
+						parent.queue_skip_to( pos );
 					});
-
+					
+					$(track).hover( 
+					  function() {
+						
+						  var id = $(this).attr('id');
+						  var id_chunks = id.split( '_');
+						  var nid = id_chunks[1];
+						  var pos = id_chunks[4];
+						  if( pos != parent.queue_index ) {  // don't hilight the current track
+							$(this).addClass( 'queue-track-hover' );
+						  }
+					  }, 
+					  function() {
+						  $(this).removeClass( 'queue-track-hover' );
+					  }
+					);
+					
                     ++counter;
                 }
 
@@ -263,15 +330,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
                         $(thistrack).addClass( 'queue-current-track' );
 
-
-                       // $(q).scrollTop( $(thistrack).height() * parent.queue_index );
                         $(q).animate( {
-                            scrollTop: $(thistrack).height() * parent.queue_index
+                            scrollTop: ($(thistrack).height() * parent.queue_index) - 200
 
                         }, 300 );
-
-
-
                     }
 
                     ++track_counter;
@@ -498,6 +560,22 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 $('#rfp-buttonbar').append( pause_btn );
                 $('#rfp-buttonbar').append( next_btn  );
             },
+			get_url_param: function( p ) {
+				var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+				sURLVariables = sPageURL.split('&'),
+				sParameterName,
+				i;
+				for (i = 0; i < sURLVariables.length; i++) {
+				  sParameterName = sURLVariables[i].split('=');
+
+				  if (sParameterName[0] === p) {
+					return sParameterName[1] === undefined ? true : sParameterName[1];
+				  }
+				 }	
+			},
+					  
+					  
+					  
         },
 
         accessors:  {
