@@ -6,12 +6,20 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\Database;
 
 class RFPListenController extends ControllerBase {
-
+    
   public function listen_page() {
+        
+    $mode   = $_GET['mode'];
+    $id     = $_GET['id']; 
       
-    $build = array(
+    if( !$mode ) $mode = 'random';
+    if( !$id   ) $id = 0;
+         
+    $build = array( 
         '#theme' 	=> 'rfp_listen_main',
         '#test_var' => $this->t('Test Value')
     );
@@ -21,40 +29,43 @@ class RFPListenController extends ControllerBase {
     $build['#attached']['drupalSettings']['rfplisten']['debug'] = 1;      
     $build['#attached']['drupalSettings']['rfplisten']['datasource'] = $data_source;
     $build['#attached']['drupalSettings']['rfplisten']['datasource_artists'] = $data_source . 'artists.json';
-    $build['#attached']['drupalSettings']['rfplisten']['datasource_tracks'] = $data_source . '/tracks/';  
-        
-    // What if we pull all of the data in as JSON?  
-    $artist_file = DRUPAL_ROOT . '/sites/' . \Drupal::request()->getHost() .'/data/artists.json';
-    $tracks_file = DRUPAL_ROOT . '/sites/' . \Drupal::request()->getHost() .'/data/tracks.json'; 
+    $build['#attached']['drupalSettings']['rfplisten']['datasource_tracks']  = $data_source . '/tracks/'; 
+    $build['#attached']['drupalSettings']['rfplisten']['datasource_random_tracks'] = '/random-tracks/';
+    
+    $artist_url = '/sites/' . \Drupal::request()->getHost() .'/data/artists.json';
+    $tracks_url = '/sites/' . \Drupal::request()->getHost() .'/data/tracks.json'; 
       
-    $build['#attached']['drupalSettings']['rfplisten']['artists'] = json_decode( file_get_contents( $artist_file ));
-    $build['#attached']['drupalSettings']['rfplisten']['tracks' ] = json_decode( file_get_contents( $tracks_file ));
+    $build['#attached']['drupalSettings']['rfplisten']['artists_datasource'] = $artist_url;
+    $build['#attached']['drupalSettings']['rfplisten']['tracks_datasource']  = $tracks_url;
+      
+    // Mode and id 
+    $build['#attached']['drupalSettings']['rfplisten']['mode'] = $mode;
+    $build['#attached']['drupalSettings']['rfplisten']['id']   = $id; 
 
-	$build['#attached']['drupalSettings']['rfplisten']['init_track' ] = \Drupal\rfp_listen\Controller\RFPListenController::_random_track();
+	// Player Graphical Resources
+	$theme_path = '/' .\Drupal::theme()->getActiveTheme()->getPath() .'/images/';
 
+	$build['#attached']['drupalSettings']['rfplisten']['images']['playbutton']  = $theme_path . 'play.png';
+	$build['#attached']['drupalSettings']['rfplisten']['images']['pausebutton'] = $theme_path . 'pause.png';
+	$build['#attached']['drupalSettings']['rfplisten']['images']['nextbutton']  = $theme_path . 'next.png';
+	$build['#attached']['drupalSettings']['rfplisten']['images']['nextbutton']  = $theme_path . 'prev.png';
+    $build['#attached']['drupalSettings']['rfplisten']['images']['queueshow']   = $theme_path . 'queueshow.png';
+    $build['#attached']['drupalSettings']['rfplisten']['images']['queuehide']   = $theme_path . 'queuehide.png';
+
+
+ 
+
+
+
+
+
+
+
+
+
+      
     return $build;  
   } 
-
-  // pick a track - any track 
-  public function _random_track( ) {
-
-	  $result = db_select( 'node', 'n' )
-		->fields( 'e', array( 'nid' ))
-		->condition( 'n.type', 'track')
-		->orderBy( 'n.nid', 'RAND()' )
-		->addTag( 'node_access')
-		->range( 0,1)->execute();
-
-	  drupal_set_message("did we find a random track?");
-
-	  //foreach( $result as $rec ) { 
-	//		drupal_set_message("GOT REC $rec");
-	 // }
-
-	  return 12345;
-
-  } 
-
 }
 
 ?>
