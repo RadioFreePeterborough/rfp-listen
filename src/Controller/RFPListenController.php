@@ -11,7 +11,7 @@ use Drupal\Core\Database\Database;
 
 class RFPListenController extends ControllerBase {
 
-  public function listen_page() {
+  public function listen_page( $mode, $id ) {
 
       $build = array(
         '#theme' 	  => 'rfp_listen_main',
@@ -58,6 +58,11 @@ class RFPListenController extends ControllerBase {
       $build['#attached']['drupalSettings']['rfplisten']['images']['searchhide']   = $theme_path . 'close.png';
 
       return $build;
+  }
+
+  public function get_title() {
+
+	  return 'HERE IS THE TITLE AT ' . time();
   }
 }
 

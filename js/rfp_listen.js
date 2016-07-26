@@ -33,14 +33,55 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
     'use strict';
     $(document).ready(function () {
 
+	  document.title = 'Radio Free Peterborough';
+	  
     xtag.register( 'rfp-listen',  {
 
 		lifecycle: {
 
 			created: function() {
 
-        $('#loading').hide(); // hide the loading message
-        this.init();
+				  // Add event handler for player - if it gets to the end of the track, switch to next
+				  parent = this;
+				  $('#rfp-hidden-player').on( 'ended', function() {
+						//++parent.queue_index;
+						var next_index = Number(parent.queue_index) + 1;
+						if( next_index > parent.queue.length - 1 ) { next_index = 0; }
+						parent.queue_skip_to( next_index );		
+				  });
+			  
+				  // Keydown handlers..
+				  $('BODY').keydown( function ( data ) {
+					
+						if( event.which == 37 ) { // left arrow 
+						  
+							var next_index = Number(parent.queue_index) - 1;
+							if( next_index >= 0 ) { // we are not on the first track
+							  
+								parent.queue_skip_to( next_index );
+							}
+						}
+						if( event.which == 39 ) { // right arrow 
+						  
+						  var next_index = Number(parent.queue_index) + 1;
+						  if( next_index < parent.queue.length )  {
+							
+							parent.queue_skip_to( next_index );
+						  }  
+						}
+						if( event.which == 27 ) { // escape 
+						  
+						  if( $('#rfp-queue').is( ':visible' ) ) {
+							 parent.queuetoggle();
+						  }
+						  if( $('#rfp-search').is( ':visible' ) ) {
+							 parent.searchtoggle();
+						  }  
+						}	
+				  });
+				  
+				  $('#loading').hide(); // hide the loading message
+				  this.init();
 			}
 		},
 		content: function() {
@@ -57,18 +98,13 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
           <div id="rfp-track-details">
             <h1 id="rfp-track-title" ></h1>
             <h2><span id="rfp-track-recording-name"></span> - <span id="rfp-track-artist-name"></span></h2>
+            <div id="like-button-holder"></div>
+            
             <div id="TODO">
             <br/>
             <small>
             <strong>artist id: 173 Joe Hall<br>recording id = 1031 <br>test track = 2297 - mama raised a misfit</strong><br/>
             [ TODO:  Look into the queue list mis-rending bug - likely long album related - truncate in DataController ]
-
-            [ TODO: Truncate long album names  Ex:  Hush Money Presents.......... ]
-
-            [ TODO: Bind next / prev keyboard events to arrows ]
-
-            <br>
-            [ TODO: Add event listener to audio player to fire up next track in queue (if there is one) when track completes ]
 
             [ TODO:  Modes:  track, recording, artist, playlist, shuffle ]
             <br>
@@ -390,10 +426,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 $('#rfp-search').empty();
 
                 // Add back the close button..
-        				var searchtoggle = $('A#search-toggle' ).clone( true );
-        				searchtoggle.className = 'rfp-in-search-toggle';
-        				$(searchtoggle).css( 'position', 'relative' );
-        				$(searchtoggle).css( 'left', '15px' );
+				var searchtoggle = $('A#search-toggle' ).clone( true );
+				searchtoggle.className = 'rfp-in-search-toggle';
+				$(searchtoggle).css( 'position', 'relative' );
+				$(searchtoggle).css( 'left', '15px' );
                 $(searchtoggle).css( 'top', 0 );
 
                 $(searchtoggle).empty();
@@ -405,14 +441,14 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 $(qtimg).css( 'width', '35px').css( 'height', '35px' );
                 $(searchtoggle).append( qtimg );
 
-        				$('#rfp-search').append( searchtoggle );
+        		$('#rfp-search').append( searchtoggle );
 
 
                 var searchtitle = document.createElement( 'h2');
                 searchtitle.innerHTML = 'Search';
                 searchtitle.className = 'search-title';
 
-                //$('#rfp-search').append( searchtitle );
+               
 
                 //  Add our search interface
                 var search_html = '<div id="rfp-search-wrapper">'
@@ -441,6 +477,9 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
             rfp_search: function() {
 
+				// Remove any old search results..
+				$('.rfp-search-results').remove();
+				 
                 var mode = $('#rfp-search-for').val();
                 var keywords_raw = $('#rfp-search-keywords').val();
                 var url = drupalSettings.rfplisten.searchprovider  + mode + '/1/' + keywords_raw;
@@ -455,7 +494,67 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 var parent = this;
                 $.get( url, function( data ) {
 
-                    console.log("Search for " + url + " returns " + data );
+                   // console.log("Search for " + url + " returns " + data );
+					
+					var results_display = document.createElement( 'ul' );
+					results_display.className = 'rfp-search-results';
+					
+					
+					
+					var results =  JSON.parse( data );
+					if( results.length == 0 ) {
+						  alert( "Sorry - your search produced no results");
+						  return null;
+					}
+					
+					
+					for( var x = 0; x <= results.length - 1; ++x ) {
+							
+							var result_row = document.createElement( 'li' );
+							result_row.className = 'rfp-search-result';
+							result_row.setAttribute( 'id', 'search_' + mode + '_id_' + results[x].nid );
+							
+							$(result_row).on( 'click', function( e ) {
+							  
+								  var id = $(this).attr('id');
+								  var id_chunks = id.split( '_' );
+								  var mode = id_chunks[1];
+								  var id = id_chunks[3];
+								  var url = '/?mode=' + mode + '&id=' + id;
+								  document.location = url;	  
+							});
+							
+							var html = '';
+							switch( mode ) {
+							  
+							  case 'artist':
+								  html = "<h2 id='search_" + mode + "_id_" + results[x].nid + "'>" + results[x].title + '</h2>';
+								 break;
+								
+							  case 'recording':
+								  var id = "search_" + mode + "_id_" + results[x].nid;
+								  
+								  
+								  
+								  html = 'RECORDING: ' + results[x].title + '  by ' + results[x].artist_name;
+								  
+								  
+								  html = '<img id="' + id + '" src="' + results[x].cover + '" class="rfp-search-result-thumb" />';
+								  html += '<h2 id="' + id + '" class="rfp-search-result-title">' + results[x].title + '</h2>';
+								  html += '<h2 id="' + id + '" class="rfp-search-result-subtitle">' + results[x].artist_name + '</h2>';
+								  
+								  
+								 break;
+								
+							  case 'track':
+								  html = 'TRACK: ' + results[x].title; 	  
+							}
+							
+							result_row.innerHTML = html;
+							$(results_display).append( result_row );
+					}
+					
+					$('#rfp-search').append( results_display );
 
 
                 });
@@ -496,7 +595,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
                 // Force bounds
                 if( to < 0 ) { to = 0; }
-                if( to > this.queue.length - 1 ) { to = this.queue.length - 1; }
+                if( to > this.queue.length - 1 ) { to = 0; }
  
                 var was_playing = this.playing;
 
@@ -543,7 +642,11 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 			document.spinner = new Spinner(opts).spin(target);
 
 			$('#rfp-track-details').hide();
+			
+			
 			$('#rfp-track-title').text( this.currentTrack.title );
+			document.title = this.currentTrack.title + ' - ' + this.currentTrack.artist_name + ' | Radio Free Peterborough '; 
+			
 			$('#rfp-track-artist-name').text( this.currentTrack.artist_name );
 			$('#rfp-track-recording-name').text( this.currentTrack.recording_title );
 
@@ -569,6 +672,33 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 			cover.src =  this.currentTrack.recording_cover;
 			$(cover).css( 'display', 'none' );
 			$('#rfp-recording-cover').append( cover );
+			
+			$('#like-button-holder').empty();
+			
+			
+			 // Share / Like Button..
+			if( this.queue.length > 0 ) {
+			
+				var current_trackid = this.queue[ this.queue_index ].nid;
+				var fb_like = '<div class="fb-like" data-href="http://'  + window.location.hostname 
+				  + '/?mode=track&amp;id=' + current_trackid   
+				  + '" data-layout="button" data-width="150" data-action="like" data-size="small" data-show-faces="true" data-share="true"></div>';
+			
+				
+				var fb_like = '<iframe src="https://www.facebook.com/plugins/like.php?href=http://'  + window.location.hostname 
+				  + '/?mode=track%26id=' + current_trackid +'&width=450&layout=standard&action=like&show_faces=true&share=true&height=80&appId" width="450" height="80" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true"></iframe>';
+				  
+				var like_wrapper = document.createElement( 'div' );
+				like_wrapper.className = 'like-wrapper';
+				
+				
+				
+			
+				like_wrapper.innerHTML = fb_like;
+			
+				$('#like-button-holder').append( like_wrapper );
+				
+			}	
       },
 
       _fetch_track: function( id ) {  // Load our track info..
@@ -694,28 +824,28 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
           $('#rfp-buttonbar').append( prev_btn  );
           $('#rfp-buttonbar').append( play_btn  );
           $('#rfp-buttonbar').append( pause_btn );
-          $('#rfp-buttonbar').append( next_btn  );
+          $('#rfp-buttonbar').append( next_btn  );  
       },
 
-			get_url_param: function( p ) {
-				var sPageURL = decodeURIComponent(window.location.search.substring(1)),
-				sURLVariables = sPageURL.split('&'),
-				sParameterName,
-				i;
-				for (i = 0; i < sURLVariables.length; i++) {
-				  sParameterName = sURLVariables[i].split('=');
+	  get_url_param: function( p ) {
+		  var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+		  sURLVariables = sPageURL.split('&'),
+		  sParameterName,
+		  i;
+		  for (i = 0; i < sURLVariables.length; i++) {
+			sParameterName = sURLVariables[i].split('=');
 
-				  if (sParameterName[0] === p) {
-					return sParameterName[1] === undefined ? true : sParameterName[1];
-				  }
-				 }
-			},
+			if (sParameterName[0] === p) {
+			  return sParameterName[1] === undefined ? true : sParameterName[1];
+			}
+			}
+	  },
     },
 
     accessors:  {
 
         queue_index:        { attribute: {} },
-	      playing:            { attribute: {} },
+	    playing:            { attribute: {} },
         artists_by_nid:     { attribute: {} },
         artists_by_title:   { attribute: {} },
     }

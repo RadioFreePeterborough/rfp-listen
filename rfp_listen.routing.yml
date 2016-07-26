@@ -1,8 +1,11 @@
 rfp_listen.listen:
-  path: '/listen'
+  path: '/listen/{mode}/{id}'
   defaults:
     _controller: '\Drupal\rfp_listen\Controller\RFPListenController::listen_page'
     _title: ''
+   
+    mode: 'random'
+    id: '9999'
     
   requirements:
     _permission: 'access content'

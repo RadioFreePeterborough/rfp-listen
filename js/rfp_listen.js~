@@ -1,4 +1,7 @@
 /*global document: false */
+/*global Spinner: false */
+
+
 /* Set up the RFP Listener Page Widgets */
 
 document.spinner_opts =  {
@@ -26,108 +29,160 @@ document.spinner_opts =  {
 
 document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
-
 (function ($) {
+    'use strict';
+    $(document).ready(function () {
 
-    $(document).ready( function() {
-
-       'use strict';
-
-	   xtag.register( 'rfp-listen',  {
+	  document.title = 'Radio Free Peterborough';
+	  
+    xtag.register( 'rfp-listen',  {
 
 		lifecycle: {
 
 			created: function() {
 
-                $('#loading').hide(); // hide the loading message
-                this.init( );
+				  // Add event handler for player - if it gets to the end of the track, switch to next
+				  parent = this;
+				  $('#rfp-hidden-player').on( 'ended', function() {
+						//++parent.queue_index;
+						var next_index = Number(parent.queue_index) + 1;
+						if( next_index > parent.queue.length - 1 ) { next_index = 0; }
+						parent.queue_skip_to( next_index );		
+				  });
+			  
+				  // Keydown handlers..
+				  $('BODY').keydown( function ( data ) {
+					
+						if( event.which == 37 ) { // left arrow 
+						  
+							var next_index = Number(parent.queue_index) - 1;
+							if( next_index >= 0 ) { // we are not on the first track
+							  
+								parent.queue_skip_to( next_index );
+							}
+						}
+						if( event.which == 39 ) { // right arrow 
+						  
+						  var next_index = Number(parent.queue_index) + 1;
+						  if( next_index < parent.queue.length )  {
+							
+							parent.queue_skip_to( next_index );
+						  }  
+						}
+						if( event.which == 27 ) { // escape 
+						  
+						  if( $('#rfp-queue').is( ':visible' ) ) {
+							 parent.queuetoggle();
+						  }
+						  if( $('#rfp-search').is( ':visible' ) ) {
+							 parent.searchtoggle();
+						  }  
+						}	
+				  });
+				  
+				  $('#loading').hide(); // hide the loading message
+				  this.init();
 			}
 		},
 		content: function() {
 		 /*
-			<audio controls id="rfp-hidden-player" style="display: none;">
-				Your browser does not support the audio element.
-			</audio>
-       <div id="rfp-wrapper">
+      <audio controls id="rfp-hidden-player" style="display: none;">
+      Your browser does not support the audio element.
+      </audio>
+      <div id="rfp-wrapper">
         <a id="queue-toggle" title="Show the playlist"></a>
-        <div id="rfp-queue">We are the queue.... <a id="queue-toggle-inqueue"></a></div>
-		<div id="rfp-recording-cover"></div>
-		<div id="rfp-track-details">
+        <a id="search-toggle" title="Search the catalogue"></a>
+        <div id="rfp-queue"><a id="queue-toggle-inqueue"></a></div>
+        <div id="rfp-search"><a id="search-toggle-insearch"></a></div>
+        <div id="rfp-recording-cover"></div>
+          <div id="rfp-track-details">
+            <h1 id="rfp-track-title" ></h1>
+            <h2><span id="rfp-track-recording-name"></span> - <span id="rfp-track-artist-name"></span></h2>
+            <div id="like-button-holder"></div>
+            
+            <div id="TODO">
+            <br/>
+            <small>
+            <strong>artist id: 173 Joe Hall<br>recording id = 1031 <br>test track = 2297 - mama raised a misfit</strong><br/>
+            [ TODO:  Look into the queue list mis-rending bug - likely long album related - truncate in DataController ]
 
-		 <h1 id="rfp-track-title" ></h1>
-		 <h2><span id="rfp-track-recording-name"></span> - <span id="rfp-track-artist-name"></span></h2>
-         <div id="TODO">
-		 <br/>
+            [ TODO:  Modes:  track, recording, artist, playlist, shuffle ]
+            <br>
+            [ TODO: Playlists:  add, reorder, edit + tag, delete, promote ]
+            <br>
+            [ TODO: Should allow user to download recording if it is a freebie ]
+            <br>
+            [ TODO: fix line heights in queue for long album names (like PW burnt by the sun scared by the thunder) ]
+            </small>
+          </div>
+      </div>
 
-		 <br>
-		 <strong>Note: test recording id is 1031 for 389's exit wound traces and test track is 2297 - mama raised a misfit</strong>
-         [ TODO: Nice graphical queue close button ] 
-         <br>
-         [ TODO: Add event listener to audio player to fire up next track in queue (if there is one) when track completes ]
-
-		 [ TODO:  Modes:  track, recording, artist, playlist, shuffle ]
-         <br>
-         [ TODO: Playlists:  add, reorder, edit + tag, delete, promote ]
-         <br>
-         [ TODO: Should allow user to download recording if it is a freebie ]
-         <br>
-         [ TODO: fix line heights in queue for long album names (like PW burnt by the sun scared by the thunder) ]
-         </div>
-
-	  </div>
-
-	  <div style="clear: both;"></div>
       <div id="rfp-buttonbar"></div>
-    </div> <!-- end wrapper -->
+      </div> <!-- end wrapper -->
 		 */
 		},
         methods: {
 
            init: function() {
 
-               window.rfp = this;
-			 
-				var mode = this.get_url_param( 'mode' );
-				var id   = Number( this.get_url_param( 'id' ));
-				
-				if( !mode ) { mode = 'random'; } 
-				if( !id || id === 'NaN'  ) id = 0;
-				
-               this.queue = []; // our central playback queue - only holds node ids
-               this.queue_index = 0;
-               var parent = this;
-               // Hide / Show Queue
-                $('#queue-toggle').click( parent.queuetoggle );
+              window.rfp = this;
 
-                // set the image for the queue show button
-                var i = document.createElement( 'img' );
-                i.src = drupalSettings.rfplisten.images.queueshow;
-                $(i).css( 'width', '40px' );
-                $(i).css( 'height', '40px');
-                $(i).css( 'margin', '5px');
-				
-                $('#queue-toggle').append( i );
-				
+			  var mode = this.get_url_param( 'mode' );
+			  var id   = Number( this.get_url_param( 'id' ));
+
+			  if( !mode ) { mode = 'random'; }
+			  if( !id || id === 'NaN'  ) id = 0;
+			  
+			
+              this.queue = []; // our central playback queue - only holds node ids
+              this.queue_index = 0;
+              var parent = this;
+
+              // Hide / Show Queue
+              $('#queue-toggle').click( parent.queuetoggle );
+
+              // set the image for the queue show button
+              var i = document.createElement( 'img' );
+              i.src = drupalSettings.rfplisten.images.queueshow;
+              $(i).css( 'width', '40px' );
+              $(i).css( 'height', '40px');
+              $(i).css( 'margin', '5px');
+
+              $('#queue-toggle').append( i );
+
                switch( mode ) {
+
+					  case 'artist':
+						this.init_artist_mode( id );
+						break;
 				 
-				  case 'recording':
-					this.init_recording_mode( id );
-					break;
-					
-				  case 'track':
-					this.init_track_mode( id );
-					break;
+      				  case 'recording':
+      					this.init_recording_mode( id );
+      					break;
 
+      				  case 'track':
+      					this.init_track_mode( id );
+      					break;
 
-				  case 'random':
-				  default:
-					  this.init_random_mode();
-               }
+      				  case 'random':
+      				  default:
+      					  this.init_random_mode();
+              }
 
-               this.resetButtonBar();
-			},
+              // Hide / Show search interface
+              $('#search-toggle').click( parent.searchtoggle );
+              // set the image for the queue show button
+              var i = document.createElement( 'img' );
+              i.src = drupalSettings.rfplisten.images.searchshow;
+              $(i).css( 'width', '40px' );
+              $(i).css( 'height', '40px');
+              $(i).css( 'margin', '5px');
+              $('#search-toggle').append( i );
 
-            init_random_mode: function() {
+              this.reset_button_bar();
+      		},
+
+           init_random_mode: function() {
 
                 // grab 25 random songs
                 var data_path  = drupalSettings.rfplisten.datasource_random_tracks;
@@ -142,97 +197,109 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                     parent.play_queue();
                 });
             },
-			init_recording_mode: function( recording_id ) {
-			  
-				// Can we get this recording?
-				var recording_url = drupalSettings.rfplisten.datasource_recordings_by_id + recording_id + '.json';
-				var parent = this;
-				
-				$.getJSON( recording_url, function (recording_data) { 
+			init_artist_mode: function( artist_id ) {
 				  
-					var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + recording_id + '.json';
-					$.getJSON( tracks_url, function( tracks ) {
+				  // Get recordings that match this artist..
+				  var data_path = drupalSettings.rfplisten.datasource_artist  + artist_id;
+				  var parent = this;
+				    $.get( data_path,  function( data ) {
 					  
-					  var recording_tracks = [];
+					 var tracks = JSON.parse( data );
+					 if( tracks.length == 0 ) {
+						  alert('We were unable to find an artist matching that id - switching back to random mode');
+						  
+						  document.location = '/';
+						  return;  
+					 }
 					  
-					  for ( var t in tracks ) {
-						
-						if( !tracks[t].title ) { continue; } 
-						recording_tracks.push( tracks[t] );
-					  }
-
-					  parent.reset_queue( recording_tracks);
-					  parent.queue_index = 0;
-					  document.spinner.stop();
-					  parent.play_queue();
-  
-					}).fail( function() { 
-						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
-						parent.init_random_mode();
-					});		  
-				})
-				.fail( function() { 
-					alert("Sorry - we were unable to find a recording with that id. Initializing in random mode instead");
-					parent.init_random_mode();
-				});
+                    parent.reset_queue( tracks );
+                    parent.queue_index = 0;
+                    document.spinner.stop();
+                    parent.play_queue();
+                });
 			},
-			
-			init_track_mode: function( track_id ) {
-			  
-			  // Does this track exist?
-			  var track_url = drupalSettings.rfplisten.datasource_tracks + track_id + '.json';
-			  var parent = this;
-			  
-			  $.getJSON( track_url, function( track ) {
+				   		   
+            init_recording_mode: function( recording_id ) {
 
-				  var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + track.recording + '.json';
-					$.getJSON( tracks_url, function( tracks ) {
-					  
-					  var recording_tracks = [];
-					  var counter = 0;
-					  for ( var t in tracks ) {
-						
-						if( !tracks[t].title ) { continue; } 
-						if( tracks[t].nid == track.nid ) {   // If this is our desired track, set queue index to match
-						  parent.queue_index = counter; 
-						} 
-						
-						recording_tracks.push( tracks[t] );
-						++counter;
-					  }
+      				// Can we get this recording?
+      				var recording_url = drupalSettings.rfplisten.datasource_recordings_by_id + recording_id + '.json';
+      				var parent = this;
 
-					  parent.reset_queue( recording_tracks);
-					  		  
-					  document.spinner.stop();
-					  parent.play_queue();
-					  parent.reset_queue_hilight();			
-  
-					}).fail( function() { 
-						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
-						parent.init_random_mode();
-					});	
-				  
-				  
-				
-			  }).fail( function() {
-					alert("Sorry - we were unable to find a track with that id. Initializing in random mode instead");
-					parent.init_random_mode();
-			  });
-			  
-			  
-			  
-			 
-			  
-			},
-					  
-					  
+      				$.getJSON( recording_url, function (recording_data) {
+
+      					var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + recording_id + '.json';
+      					$.getJSON( tracks_url, function( tracks ) {
+
+      					  var recording_tracks = [];
+
+      					  for ( var t in tracks ) {
+
+      						if( !tracks[t].title ) { continue; }
+      						recording_tracks.push( tracks[t] );
+      					  }
+
+      					  parent.reset_queue( recording_tracks);
+      					  parent.queue_index = 0;
+      					  document.spinner.stop();
+      					  parent.play_queue();
+
+      					}).fail( function() {
+      						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
+      						parent.init_random_mode();
+      					});
+      				})
+      				.fail( function() {
+      					alert("Sorry - we were unable to find a recording with that id. Initializing in random mode instead");
+      					parent.init_random_mode();
+      				});
+            },
+
+      			init_track_mode: function( track_id ) {
+
+      			  // Does this track exist?
+      			  var track_url = drupalSettings.rfplisten.datasource_tracks + track_id + '.json';
+      			  var parent = this;
+
+      			  $.getJSON( track_url, function( track ) {
+
+      				  var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + track.recording + '.json';
+      					$.getJSON( tracks_url, function( tracks ) {
+
+      					  var recording_tracks = [];
+      					  var counter = 0;
+      					  for ( var t in tracks ) {
+
+        						if( !tracks[t].title ) { continue; }
+        						if( tracks[t].nid == track.nid ) {   // If this is our desired track, set queue index to match
+        						  parent.queue_index = counter;
+        						}
+
+        						recording_tracks.push( tracks[t] );
+        						++counter;
+      					  }
+
+      					  parent.reset_queue( recording_tracks);
+
+      					  document.spinner.stop();
+      					  parent.play_queue();
+      					  parent.reset_queue_hilight();
+      					  parent.reset_button_bar();
+
+      					}).fail( function() {
+      						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
+      						parent.init_random_mode();
+      					});
+      			  }).fail( function() {
+      					alert("Sorry - we were unable to find a track with that id. Initializing in random mode instead");
+      					parent.init_random_mode();
+      			  });
+      			},
+
             play_queue: function() {
 
                 var t = this.queue[ this.queue_index ];
                 this._init_track( t );
             },
-
-
 
             queue_next_track: function() {
 
@@ -253,26 +320,31 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
             queuetoggle: function( ) { // Show or hide the queue
 
-                $('#rfp-queue').animate( {'width': 'toggle' }, 170  );
-				window.rfp.reset_queue_hilight();
+			  $('#rfp-queue').animate( {'width': 'toggle' }, 170  );
+			  window.rfp.reset_queue_hilight();
             },
 
             // Overwrite the existing queue - then load up the first track in the queue
             reset_queue: function( newqueue ) {
 
                 this.queue = newqueue;
-
                 $('#rfp-queue').empty();
 
 				// Add back the close button..
 				var queuetoggle = $('A#queue-toggle' ).clone( true );
 				queuetoggle.className = 'rfp-in-queue-toggle';
 				$(queuetoggle).css( 'position', 'relative' );
-
 				$(queuetoggle).css( 'left', '15px' );
-				$(queuetoggle).text( '[ X ]' );
+                $(queuetoggle).empty();
+                $(queuetoggle).attr( 'title', 'Close the playlist' );
 
-				$('#rfp-queue').append( queuetoggle );
+                var qtimg = document.createElement( 'img' );
+                qtimg.src = drupalSettings.rfplisten.images.queuehide;
+
+                $(qtimg).css( 'width', '35px').css( 'height', '35px' );
+                $(queuetoggle).append( qtimg );
+
+        		$('#rfp-queue').append( queuetoggle );
 
                 // And the grippie
                 var grippie = document.createElement( 'div' );
@@ -283,75 +355,217 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 $('#rfp-queue-grippie').click( this.queuetoggle );
 
                 var tracks = document.createElement('ul');
-				tracks.className = 'rfp-queue-tracks';
+                tracks.className = 'rfp-queue-tracks';
 
                 var counter = 0;
+				var parent = this;
 
                 for( var t in this.queue ) {
 
-                    var parent = this;
                     var track = document.createElement('li');
+          			var trackid = 'track_' + this.queue[t].nid + '_in_position_' + counter;
+                    var title = this.queue[t].title;
+					if( !title ) continue; // Ignore blank titles
+
+                    track.setAttribute( 'id', trackid );
+          			track.className += 'rfp-queue-track';
                     tracks.appendChild( track );
 
-					var trackid = 'track_' + this.queue[t].nid + '_in_position_' + counter;
-                    track.setAttribute( 'id', trackid );
-					track.className += 'rfp-queue-track';
-
-					var title = this.queue[t].title;
 					// Truncate long titles..
 					if( title.length > 45 ) {
-						title = title.substring( 0, 45 ) + '...';
-					}
-
+          				title = title.substring( 0, 45 ) + '...';
+                    }
 
                     track.innerHTML = '<img  id="' + trackid + '" src="' + this.queue[t].recording_cover
                         + '" alt="' + this.queue[t].artist_name + '" class="queue-thumb"/>';
 
                     track.innerHTML += '<div id="queue-track-details">' +
-					  '<span class="queue-details rfp-track-title"><h3>' + title + '</h3></span>' +
-					  '<span class="queue-details rfp-recording-title"><h3>' + this.queue[t].recording_title + '</h3></span>' +
-					  '<span class="queue-details rfp-track-artist"><p>' + this.queue[t].artist_name + '</p></span></div>';
+                      '<span class="queue-details rfp-track-title"><h3>' + title + '</h3></span>' +
+                      '<span class="queue-details rfp-recording-title"><h3>' + this.queue[t].recording_title + '</h3></span>' +
+                      '<span class="queue-details rfp-track-artist"><p>' + this.queue[t].artist_name + '</p></span></div>';
 
-                    track.class = 'rfp-queue-track';
-                    track.position = counter;
+                    track.class     = 'rfp-queue-track';
+                    track.position  = counter;
+                    
+                    $(track).on( 'click', function() {
 
-                    parent = this;
-
-					$(track).on( 'click', function() {
-
-						var id = $(this).attr('id');
-						var id_chunks = id.split( '_');
-						var nid = id_chunks[1];
-						var pos = id_chunks[4];
+                    	var id = $(this).attr('id');
+                    	var id_chunks = id.split( '_');
+                    	var nid = id_chunks[1];
+                    	var pos = id_chunks[4];
 
                         if( pos == parent.queue_index ) { return; } // do nothing if we click on the current track
-						parent.queue_skip_to( pos );
-					});
-					
-					$(track).hover( 
-					  function() {
-						
-						  var id = $(this).attr('id');
-						  var id_chunks = id.split( '_');
-						  var nid = id_chunks[1];
-						  var pos = id_chunks[4];
-						  if( pos != parent.queue_index ) {  // don't hilight the current track
-							$(this).addClass( 'queue-track-hover' );
-						  }
-					  }, 
-					  function() {
-						  $(this).removeClass( 'queue-track-hover' );
-					  }
-					);
-					
+                    	parent.queue_skip_to( pos );
+                    });
+
+                    $(track).hover( function() {
+
+                    	  var id = $(this).attr('id');
+                    	  var id_chunks = id.split( '_');
+                    	  var nid = id_chunks[1];
+                    	  var pos = id_chunks[4];
+                    	  if( pos != parent.queue_index ) {  // don't hilight the current track
+                    		$(this).addClass( 'queue-track-hover' );
+                    	  }
+                      },
+                      function() {
+                    	  $(this).removeClass( 'queue-track-hover' );
+                      }
+                    );
+
                     ++counter;
+                  }
+
+                  $('#rfp-queue').append( tracks );
+                  this.reset_queue_hilight();
+            },
+
+
+            reset_search: function() {
+
+                $('#rfp-search').empty();
+
+                // Add back the close button..
+				var searchtoggle = $('A#search-toggle' ).clone( true );
+				searchtoggle.className = 'rfp-in-search-toggle';
+				$(searchtoggle).css( 'position', 'relative' );
+				$(searchtoggle).css( 'left', '15px' );
+                $(searchtoggle).css( 'top', 0 );
+
+                $(searchtoggle).empty();
+                $(searchtoggle).attr( 'title', 'Close the search box' );
+
+                var qtimg = document.createElement( 'img' );
+                qtimg.src = drupalSettings.rfplisten.images.searchhide;
+
+                $(qtimg).css( 'width', '35px').css( 'height', '35px' );
+                $(searchtoggle).append( qtimg );
+
+        		$('#rfp-search').append( searchtoggle );
+
+
+                var searchtitle = document.createElement( 'h2');
+                searchtitle.innerHTML = 'Search';
+                searchtitle.className = 'search-title';
+
+               
+
+                //  Add our search interface
+                var search_html = '<div id="rfp-search-wrapper">'
+                + '<select id="rfp-search-for">'
+                  + '<option value="artist">Search by Artist Name</option>'
+                  + '<option value="recording">Search by Recording Title</option>'
+                  + '<option value="track">Search by Track Title</option>'
+                + '</select>'
+                + '<h3 class="search-label">Search Keywords:</h3>'
+                + '<input type="text" id="rfp-search-keywords">'
+                + '<input type="submit" id="rfp-search-submit" onclick="window.rfp.rfp_search()" value="Search" >';
+
+                // And a div to hold it for easier styling
+                var searchbydiv = document.createElement( 'div' );
+                searchbydiv.className = 'search-by-div';
+                searchbydiv.innerHTML = search_html;
+                $('#rfp-search').append( searchbydiv );
+
+            },
+            searchtoggle: function() {
+
+                window.rfp.reset_search();
+                $('#rfp-search').animate( { 'width': 'toggle' }, 170 );
+                window.rfp.reset_queue_hilight();
+            },
+
+            rfp_search: function() {
+
+				// Remove any old search results..
+				$('.rfp-search-results').remove();
+				 
+                var mode = $('#rfp-search-for').val();
+                var keywords_raw = $('#rfp-search-keywords').val();
+                var url = drupalSettings.rfplisten.searchprovider  + mode + '/1/' + keywords_raw;
+
+                if( keywords_raw == '' ) {
+
+                  alert('Please enter some keywords');
+                  $('#rfp-search-keywords').css( 'border', 'solid thin red' );
+                  return;
                 }
 
-                $('#rfp-queue').append( tracks );
+                var parent = this;
+                $.get( url, function( data ) {
 
-                // reset the now playing hilight
-                this.reset_queue_hilight();
+                   // console.log("Search for " + url + " returns " + data );
+					
+					var results_display = document.createElement( 'ul' );
+					results_display.className = 'rfp-search-results';
+					
+					
+					
+					var results =  JSON.parse( data );
+					if( results.length == 0 ) {
+						  alert( "Sorry - your search produced no results");
+						  return null;
+					}
+					
+					
+					for( var x = 0; x <= results.length - 1; ++x ) {
+							
+							var result_row = document.createElement( 'li' );
+							result_row.className = 'rfp-search-result';
+							result_row.setAttribute( 'id', 'search_' + mode + '_id_' + results[x].nid );
+							
+							$(result_row).on( 'click', function( e ) {
+							  
+								  var id = $(this).attr('id');
+								  var id_chunks = id.split( '_' );
+								  var mode = id_chunks[1];
+								  var id = id_chunks[3];
+								  var url = '/?mode=' + mode + '&id=' + id;
+								  document.location = url;	  
+							});
+							
+							var html = '';
+							switch( mode ) {
+							  
+							  case 'artist':
+								  html = "<h2 id='search_" + mode + "_id_" + results[x].nid + "'>" + results[x].title + '</h2>';
+								 break;
+								
+							  case 'recording':
+								  var id = "search_" + mode + "_id_" + results[x].nid;
+								  
+								  
+								  
+								  html = 'RECORDING: ' + results[x].title + '  by ' + results[x].artist_name;
+								  
+								  
+								  html = '<img id="'  + id + '" src="' + results[x].cover + '" class="rfp-search-result-thumb" />';
+								  html += '<h2 id="'. + id + '" class="rfp-search-result-title">' + results[x].title + '</h2>';
+								  html += '<h2 id="'. + id + '" class="rfp-search-result-subtitle">' + results[x].artist_name + '</h2>';
+								  
+								  
+								 break;
+								
+							  case 'track':
+								  html = 'TRACK: ' + results[x].title; 	  
+							}
+							
+							result_row.innerHTML = html;
+							$(results_display).append( result_row );
+					}
+					
+					$('#rfp-search').append( results_display );
+
+
+                });
+
+
+                console.log( "SEARCH CATALOGUE " + mode + ' keys: ' + keywords_raw + ' url: ' + url );
+
+
+
             },
+
 
             reset_queue_hilight: function() {
 
@@ -381,15 +595,15 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
                 // Force bounds
                 if( to < 0 ) { to = 0; }
-                if( to > this.queue.length - 1 ) { to = this.queue.length - 1; }
-
+                if( to > this.queue.length - 1 ) { to = 0; }
+ 
                 var was_playing = this.playing;
 
 				this.playing = 0;
                 this.queue_index = to;
                 this.reset_queue_hilight();
                 this.play_queue();
-                this.resetButtonBar();
+                this.reset_button_bar();
 
                 if( was_playing == 1 ) {
 
@@ -397,96 +611,125 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 }
             },
 
+		  showCurrentTrack: function() {
 
-			showCurrentTrack: function() {
+			$('#TODO').hide();
 
-                $('#TODO').hide();
+			var opts = {
+			  lines: 11 // The number of lines to draw
+			, length: 10 // The length of each line
+			, width: 16 // The line thickness
+			, radius: 42 // The radius of the inner circle
+			, scale: 0.75 // Scales overall size of the spinner
+			, corners: 1 // Corner roundness (0..1)
+			, color: '#000' // #rgb or #rrggbb or array of colors
+			, opacity: 0.25 // Opacity of the lines
+			, rotate: 0 // The rotation offset
+			, direction: 1 // 1: clockwise, -1: counterclockwise
+			, speed: 1 // Rounds per second
+			, trail: 60 // Afterglow percentage
+			, fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
+			, zIndex: 2e9 // The z-index (defaults to 2000000000)
+			, className: 'spinner' // The CSS class to assign to the spinner
+			, top: '50%' // Top position relative to parent
+			, left: '50%' // Left position relative to parent
+			, shadow: true // Whether to render a shadow
+			, hwaccel: true // Whether to use hardware acceleration
+			, position: 'absolute' // Element positioning
+			};
 
-                var opts = {
-                  lines: 11 // The number of lines to draw
-                , length: 10 // The length of each line
-                , width: 16 // The line thickness
-                , radius: 42 // The radius of the inner circle
-                , scale: 0.75 // Scales overall size of the spinner
-                , corners: 1 // Corner roundness (0..1)
-                , color: '#000' // #rgb or #rrggbb or array of colors
-                , opacity: 0.25 // Opacity of the lines
-                , rotate: 0 // The rotation offset
-                , direction: 1 // 1: clockwise, -1: counterclockwise
-                , speed: 1 // Rounds per second
-                , trail: 60 // Afterglow percentage
-                , fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
-                , zIndex: 2e9 // The z-index (defaults to 2000000000)
-                , className: 'spinner' // The CSS class to assign to the spinner
-                , top: '50%' // Top position relative to parent
-                , left: '50%' // Left position relative to parent
-                , shadow: true // Whether to render a shadow
-                , hwaccel: true // Whether to use hardware acceleration
-                , position: 'absolute' // Element positioning
-                }
-			    var target = document.getElementById('rfp-wrapper')
-                document.spinner = new Spinner(opts).spin(target);
+			var target = document.getElementById('rfp-wrapper')
+			document.spinner = new Spinner(opts).spin(target);
 
-                $('#rfp-track-details').hide();
-				$('#rfp-track-title').text( this.currentTrack.title );
-				$('#rfp-track-artist-name').text( this.currentTrack.artist_name );
-				$('#rfp-track-recording-name').text( this.currentTrack.recording_title );
+			$('#rfp-track-details').hide();
+			
+			
+			$('#rfp-track-title').text( this.currentTrack.title );
+			document.title = this.currentTrack.title + ' - ' + this.currentTrack.artist_name + ' | Radio Free Peterborough '; 
+			
+			$('#rfp-track-artist-name').text( this.currentTrack.artist_name );
+			$('#rfp-track-recording-name').text( this.currentTrack.recording_title );
 
-				var player = document.getElementById( 'rfp-hidden-player' );
-				player.setAttribute( 'src', this.currentTrack.mp3 );
+			var player = document.getElementById( 'rfp-hidden-player' );
+			player.setAttribute( 'src', this.currentTrack.mp3 );
 
-                // Preserve the dimensions so it doesn't squash over the track details
-                var w = $('#rfp-recording-cover').css( 'width' );
-                var h = $('#rfp-recording-cover').css( 'height' );
+			// Preserve the dimensions so it doesn't squash over the track details
+			var w = $('#rfp-recording-cover').css( 'width' );
+			var h = $('#rfp-recording-cover').css( 'height' );
 
-				$('#rfp-recording-cover').empty();
+			$('#rfp-recording-cover').empty();
 
-                var cover = document.createElement("IMG");
-                cover.addEventListener( 'load', function() {
+			var cover = document.createElement("IMG");
+			cover.addEventListener( 'load', function() {
 
-                    document.spinner.stop();
-                    $(cover).fadeIn();
-                    $('#rfp-track-details').fadeIn( );
-                    $('#TODO').show();
+			  document.spinner.stop();
+			  $(cover).fadeIn();
+			  $('#rfp-track-details').fadeIn( );
+			  $('#TODO').show();
 
-                }, false );
+			}, false );
 
-                cover.src =  this.currentTrack.recording_cover;
-                $(cover).css( 'display', 'none' );
+			cover.src =  this.currentTrack.recording_cover;
+			$(cover).css( 'display', 'none' );
+			$('#rfp-recording-cover').append( cover );
+			
+			$('#like-button-holder').empty();
+			
+			
+			 // Share / Like Button..
+			if( this.queue.length > 0 ) {
+			
+				var current_trackid = this.queue[ this.queue_index ].nid;
+				var fb_like = '<div class="fb-like" data-href="http://'  + window.location.hostname 
+				  + '/?mode=track&amp;id=' + current_trackid   
+				  + '" data-layout="button" data-width="150" data-action="like" data-size="small" data-show-faces="true" data-share="true"></div>';
+			
+				
+				var fb_like = '<iframe src="https://www.facebook.com/plugins/like.php?href=http://'  + window.location.hostname 
+				  + '/?mode=track%26id=' + current_trackid +'&width=450&layout=standard&action=like&show_faces=true&share=true&height=80&appId" width="450" height="80" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true"></iframe>';
+				  
+				var like_wrapper = document.createElement( 'div' );
+				like_wrapper.className = 'like-wrapper';
+				
+				
+				
+			
+				like_wrapper.innerHTML = fb_like;
+			
+				$('#like-button-holder').append( like_wrapper );
+				
+			}	
+      },
 
-				jQuery('#rfp-recording-cover').append( cover );
+      _fetch_track: function( id ) {  // Load our track info..
 
-            },
+          this.currentTrackId = id;
 
-            _fetch_track: function( id ) {  // Load our track info..
+          var data_path = drupalSettings.rfplisten.datasource_tracks + id.toString() + '.json';
+          var parent = this;
+          $.getJSON(data_path, function( json ) {
+                  parent._init_track( json );
+          });
+      },
 
-                this.currentTrackId = id;
+      _init_track: function( track_json ) {
 
-                var data_path = drupalSettings.rfplisten.datasource_tracks + id.toString() + '.json';
-                var parent = this;
-                $.getJSON(data_path, function( json ) {
-                        parent._init_track( json );
-                });
-            },
-
-            _init_track: function( track_json ) {
-
-                this.currentTrack = track_json;
-                this.currentTrackId = track_json.nid;
-                this.showCurrentTrack();
-            },
+          this.currentTrack = track_json;
+          this.currentTrackId = track_json.nid;
+          this.showCurrentTrack();
+      },
 
 			playtoggle: function() {
 
 			  if( this.playing == 1 ) {
 
-				this.playing = 0;
-				this.pause();
+				      this.playing = 0;
+				      this.pause();
 			  }
 			  else {
 
-				this.playing = 1;
-				this.play();
+				      this.playing = 1;
+				      this.play();
 			  }
 			},
 
@@ -503,114 +746,111 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 $('#rfp-play').show();
 			},
 
-            prev_track: function() {
+      prev_track: function() {
 
-                if(!$('#rfp-prev').hasClass( 'disabled' )) {
-                      this.queue_skip_to( this.queue_index - 1 );
-                }
-            },
-            next_track: function() {
+          if(!$('#rfp-prev').hasClass( 'disabled' )) {
+                this.queue_skip_to( this.queue_index - 1 );
+          }
+      },
+      next_track: function() {
 
-                 if(!$('#rfp-next').hasClass( 'disabled' )) {
+           if(!$('#rfp-next').hasClass( 'disabled' )) {
 
-                     this.queue_skip_to(Number(this.queue_index) + 1);
-                }
-            },
+               this.queue_skip_to(Number(this.queue_index) + 1);
+          }
+      },
 
-            resetButtonBar: function() {
+      reset_button_bar: function() {
 
-                $('#rfp-buttonbar' ).empty();
+          $('#rfp-buttonbar' ).empty();
 
-                // Play Button..
-                var play_img = document.createElement('img');
-                play_img.src = drupalSettings.rfplisten.images.play;
+          // Play Button..
+          var play_img = document.createElement('img');
+          play_img.src = drupalSettings.rfplisten.images.play;
 
-                var play_btn = document.createElement('a');
-                play_btn.appendChild( play_img );
-                play_btn.className += ' play-pause';
-                play_btn.addEventListener( 'click', function() { window.rfp.playtoggle(); } );
-                $(play_btn).attr( 'id', 'rfp-play' );
+          var play_btn = document.createElement('a');
+          play_btn.appendChild( play_img );
+          play_btn.className += ' play-pause';
+          play_btn.addEventListener( 'click', function() { window.rfp.playtoggle(); } );
+          $(play_btn).attr( 'id', 'rfp-play' );
 
-                // Pause Button..
-                var pause_img = document.createElement('img');
-                pause_img.src = drupalSettings.rfplisten.images.pause;
+          // Pause Button..
+          var pause_img = document.createElement('img');
+          pause_img.src = drupalSettings.rfplisten.images.pause;
 
-                var pause_btn = document.createElement('a');
-                pause_btn.appendChild( pause_img );
-                pause_btn.className += ' play-pause';
-                pause_btn.addEventListener( 'click', function() { window.rfp.playtoggle(); } );
-                $(pause_btn).attr( 'id', 'rfp-pause' );
+          var pause_btn = document.createElement('a');
+          pause_btn.appendChild( pause_img );
+          pause_btn.className += ' play-pause';
+          pause_btn.addEventListener( 'click', function() { window.rfp.playtoggle(); } );
+          $(pause_btn).attr( 'id', 'rfp-pause' );
 
-                $(pause_btn).hide();
+          $(pause_btn).hide();
 
-                // Next / Prev Track Buttons..
-                var next_img = document.createElement('img');
-                next_img.src = drupalSettings.rfplisten.images.next;
-                var next_btn = document.createElement('a');
-                next_btn.appendChild( next_img );
-                next_btn.className += ' next-prev';
-                next_btn.addEventListener( 'click', function() { window.rfp.next_track(); } );
-                $(next_btn).attr( 'id', 'rfp-next' );
+          // Next / Prev Track Buttons..
+          var next_img = document.createElement('img');
+          next_img.src = drupalSettings.rfplisten.images.next;
+          var next_btn = document.createElement('a');
+          next_btn.appendChild( next_img );
+          next_btn.className += ' next-prev';
+          next_btn.addEventListener( 'click', function() { window.rfp.next_track(); } );
+          $(next_btn).attr( 'id', 'rfp-next' );
 
+          var prev_img = document.createElement('img');
+          prev_img.src = drupalSettings.rfplisten.images.prev;
+          var prev_btn = document.createElement('a');
+          prev_btn.appendChild( prev_img );
+          prev_btn.className += ' next-prev';
+          prev_btn.addEventListener( 'click', function() { window.rfp.prev_track(); } );
+          $(prev_btn).attr( 'id', 'rfp-prev' );
 
-                var prev_img = document.createElement('img');
-                prev_img.src = drupalSettings.rfplisten.images.prev;
-                var prev_btn = document.createElement('a');
-                prev_btn.appendChild( prev_img );
-                prev_btn.className += ' next-prev';
-                prev_btn.addEventListener( 'click', function() { window.rfp.prev_track(); } );
-                $(prev_btn).attr( 'id', 'rfp-prev' );
+          // Soften them up a bit
+          var nextprevfade = 0.6;
+          $( prev_btn ).fadeTo( 0, nextprevfade );
+          $( next_btn ).fadeTo( 0, nextprevfade );
 
-                // Soften them up a bit
-                var nextprevfade = 0.6;
-                $( prev_btn ).fadeTo( 0, nextprevfade );
-                $( next_btn ).fadeTo( 0, nextprevfade );
+          // Hide them if we don't need them
+          if( this.queue_index == 0 ) {
 
-                // Hide them if we don't need them
-                if( this.queue_index == 0 ) {
+              $( prev_btn ).fadeTo( 0, 0 );
+              $( prev_btn ).addClass( 'disabled' );
+          }
 
-                    $( prev_btn ).fadeTo( 0, 0 );
-                    $( prev_btn ).addClass( 'disabled' );
-                }
+          if( this.queue_index == this.queue.length - 1 ) {
 
-                if( this.queue_index == this.queue.length - 1 ) {
+              $( next_btn ).fadeTo( 0, 0 );
+              $( next_btn ).addClass( 'disabled' );
+          }
 
-                    $( next_btn ).fadeTo( 0, 0 );
-                    $( next_btn ).addClass( 'disabled' );
-                }
+          $('#rfp-buttonbar').append( prev_btn  );
+          $('#rfp-buttonbar').append( play_btn  );
+          $('#rfp-buttonbar').append( pause_btn );
+          $('#rfp-buttonbar').append( next_btn  );  
+      },
 
-                $('#rfp-buttonbar').append( prev_btn  );
-                $('#rfp-buttonbar').append( play_btn  );
-                $('#rfp-buttonbar').append( pause_btn );
-                $('#rfp-buttonbar').append( next_btn  );
-            },
-			get_url_param: function( p ) {
-				var sPageURL = decodeURIComponent(window.location.search.substring(1)),
-				sURLVariables = sPageURL.split('&'),
-				sParameterName,
-				i;
-				for (i = 0; i < sURLVariables.length; i++) {
-				  sParameterName = sURLVariables[i].split('=');
+	  get_url_param: function( p ) {
+		  var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+		  sURLVariables = sPageURL.split('&'),
+		  sParameterName,
+		  i;
+		  for (i = 0; i < sURLVariables.length; i++) {
+			sParameterName = sURLVariables[i].split('=');
 
-				  if (sParameterName[0] === p) {
-					return sParameterName[1] === undefined ? true : sParameterName[1];
-				  }
-				 }	
-			},
-					  
-					  
-					  
-        },
+			if (sParameterName[0] === p) {
+			  return sParameterName[1] === undefined ? true : sParameterName[1];
+			}
+			}
+	  },
+    },
 
-        accessors:  {
+    accessors:  {
 
-            queue_index:        { attribute: {} },
-			playing:            { attribute: {} },
-            artists_by_nid:     { attribute: {} },
-            artists_by_title:   { attribute: {} },
-        }
-	   });
+        queue_index:        { attribute: {} },
+	    playing:            { attribute: {} },
+        artists_by_nid:     { attribute: {} },
+        artists_by_title:   { attribute: {} },
+    }
 	});
+});
 
 
 } ) ( jQuery, Drupal, drupalSettings );
