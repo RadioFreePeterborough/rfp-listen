@@ -52,7 +52,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 				  });
 
 				  // Keydown handlers..
-				  $('BODY').keydown( function ( data ) {
+				  $(document).keydown( function ( data ) {
 
 						if( event.which == 37 ) { // left arrow
 
@@ -146,6 +146,19 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               this.queue = []; // our central playback queue - only holds node ids
               this.queue_index = 0;
               var parent = this;
+              this.mode = mode;
+              this.id = id;
+
+              // Remove the homepage link from the logo if we are already on the homepage
+              if( $('BODY').hasClass( 'path-frontpage' )) {
+
+
+
+                  console.log( 'have homepage');
+                  $('.site-branding__logo-link').removeAttr('href');
+                  $('.site-branding__logo-link').css( 'cursor', 'default' );
+              }
+
 
               /*
 
@@ -498,33 +511,52 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
             uketoggle: function() {
 
-
+              $('#rfp-ukulele').empty();
               $('#rfp-ukulele').animate( { 'width': 'toggle' }, 170 );
 
+
+              // Add back the close button..
+              var uketoggle = $('A#uke-toggle' ).clone( true );
+              console.log('got uke hide btn ' + uketoggle  );
+              uketoggle.className = 'rfp-in-uke-toggle';
+              $(uketoggle).css( 'position', 'relative' );
+              $(uketoggle).css( 'left', '0' );
+              $(uketoggle).css( 'top', 0 );
+
+              $(uketoggle).empty();
+              $(uketoggle).attr( 'title', 'Close the search box' );
+
+              var qtimg = document.createElement( 'img' );
+              qtimg.src = drupalSettings.rfplisten.images.ukehide;
+
+              $(qtimg).css( 'width', '35px').css( 'height', '35px' );
+              $(uketoggle).append( qtimg );
+
+
+
+
               var uke = document.createElement( 'div' );
-
-
-              uke.innerHTML = '<h2>Free Ukulele Chord Books</h2>';
+              uke.innerHTML = '<br/><h2>Free Ukulele Chord Books</h2>';
               uke.innerHTML += "<p>You've always wanted to learn how to play the Ukulele, but never had a chord book. "
-              + "Well now, you do. In fact, you have more than just a chord book, you have a complete chord dictionary for"
-              + "left and right handed ukulele and baritone ukulele!</p><p> How is this possible you ask?  "
-              + "Through the great generosity of Dr. Stephen Luke. For more information, feel free to contact him "
-              + " directly at sluke(at)cox.net. </p><p>"
+              + "Well now, you do. In fact, you have more than just a chord book: you have a complete chord dictionary for"
+              + " left and right handed ukulele and baritone ukulele!</p><p>"
               + "These chord books are offered completely free of charge - provided any use of the material within is "
               + "credited to its original author, Dr. Stephen Luke.  Many thanks to Dr Luke for sharing his skills "
-              + "freely with the ukulele-playing world.   We're going to change the world - one ukulele at a time. </p>"
+              + "freely with the ukulele-playing world.</p>"
               + "<p>Enjoy!</p>";
 
+              // Add the pdf links
+              uke.innerHTML += '<br/><br/><div class="uke-chord-books">'
+                +'<a href="/sites/radiofreepeterborough.ca/files/pdf/LH Uke Complete.pdf" >Soprano Uke - Left Handed</a><br/>'
+                +'<a href="/sites/radiofreepeterborough.ca/files/pdf/RH Uke Complete.pdf" >Soprano Uke - Right Handed</a>'
+                +'<br/><br/>'
+                +'<a href="/sites/radiofreepeterborough.ca/files/pdf/LH Bari Uke Complete.pdf" >Baritone Uke - Left Handed</a><br/>'
+                +'<a href="/sites/radiofreepeterborough.ca/files/pdf/RH Bari Uke Complete.pdf" >Baritone Uke - Right Handed</a>'
+                + '</div>';
 
-              //uke.innerHTML = 'ukuele';
 
-              $('#rfp-ukulele').empty();
+              $('#rfp-ukulele').append( uketoggle );
               $('#rfp-ukulele').append( uke );
-
-
-
-
-
 
             },
 
@@ -730,6 +762,36 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
   				like_wrapper.innerHTML = fb_like;
 
   				$('#like-button-holder').append( like_wrapper );
+
+          if( this.mode == 'random' ) {
+
+                var recording_id = this.queue[ this.queue_index ].recording;
+
+
+                var recording_link      = document.createElement( 'a' );
+                var recording_link_icon = document.createElement( 'img' );
+                recording_link_icon.src = drupalSettings.rfplisten.images.recordinglisten;
+                $(recording_link).append( recording_link_icon );
+                $(recording_link).attr( 'href', '/?mode=recording&id=' + recording_id );
+                recording_link.className = 'rfp-recording-listen-icon';
+                $(recording_link).attr( 'title', 'Listen to this entire recording: '
+                  +  this.queue[ this.queue_index ].recording_title
+                  + ' by ' + this.queue[ this.queue_index ].artist_name );
+
+                $('#like-button-holder').append( recording_link );
+
+
+
+
+                console.log( 'add a link to play all of  ' + recording_id );
+
+          }
+
+
+
+
+
+
   			}
       },
 
