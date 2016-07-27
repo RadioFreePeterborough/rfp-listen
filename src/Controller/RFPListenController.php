@@ -56,6 +56,13 @@ class RFPListenController extends ControllerBase {
       $build['#attached']['drupalSettings']['rfplisten']['images']['queuehide']   = $theme_path . 'close.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['searchshow']   = $theme_path . 'search.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['searchhide']   = $theme_path . 'close.png';
+	  $build['#attached']['drupalSettings']['rfplisten']['images']['ukeshow']   = $theme_path . 'ukulele.png';
+      $build['#attached']['drupalSettings']['rfplisten']['images']['searchhide']   = $theme_path . 'close.png';
+	  
+
+
+	  $build['#attached']['drupalSettings']['rfplisten']['images']['recordinglisten']   = $theme_path . 'recording-listen.png';
+
 
       return $build;
   }

@@ -539,9 +539,9 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 								  html = 'RECORDING: ' + results[x].title + '  by ' + results[x].artist_name;
 								  
 								  
-								  html = '<img id="'  + id + '" src="' + results[x].cover + '" class="rfp-search-result-thumb" />';
-								  html += '<h2 id="'. + id + '" class="rfp-search-result-title">' + results[x].title + '</h2>';
-								  html += '<h2 id="'. + id + '" class="rfp-search-result-subtitle">' + results[x].artist_name + '</h2>';
+								  html = '<img id="' + id + '" src="' + results[x].cover + '" class="rfp-search-result-thumb" />';
+								  html += '<h2 id="' + id + '" class="rfp-search-result-title">' + results[x].title + '</h2>';
+								  html += '<h2 id="' + id + '" class="rfp-search-result-subtitle">' + results[x].artist_name + '</h2>';
 								  
 								  
 								 break;
