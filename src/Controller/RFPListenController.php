@@ -52,12 +52,16 @@ class RFPListenController extends ControllerBase {
       $build['#attached']['drupalSettings']['rfplisten']['images']['pause']       = $theme_path . 'pause.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['next']        = $theme_path . 'next.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['prev']        = $theme_path . 'prev.png';
-      $build['#attached']['drupalSettings']['rfplisten']['images']['queueshow']   = $theme_path . 'playlist.png';
+      $build['#attached']['drupalSettings']['rfplisten']['images']['queueshow']   = $theme_path . 'binder.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['queuehide']   = $theme_path . 'close.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['searchshow']   = $theme_path . 'search.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['searchhide']   = $theme_path . 'close.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['ukeshow']   = $theme_path . 'ukulele.png';
       $build['#attached']['drupalSettings']['rfplisten']['images']['ukehide']   = $theme_path . 'close.png';
+      $build['#attached']['drupalSettings']['rfplisten']['images']['infoshow']   = $theme_path . 'info.png';
+      $build['#attached']['drupalSettings']['rfplisten']['images']['infohide']   = $theme_path . 'close.png';
+
+      
 
       $build['#attached']['drupalSettings']['rfplisten']['images']['recordinglisten']   = $theme_path . 'recording-listen.png';
 

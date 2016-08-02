@@ -80,6 +80,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               if( $('#rfp-ukulele').is( ':visible')) {
                 parent.uketoggle();
               }
+              if( $('#info-toggle').is( ':visible')) {
+                parent.infotoggle();
+              }
+
 						}
             if( event.which == 13 ) { // enter - if search is open, submit it
 
@@ -102,9 +106,12 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
         <a id="queue-toggle" title="Show the playlist"></a>
         <a id="search-toggle" title="Search the catalogue"></a>
         <a id="uke-toggle" title="Every possible Ukulele Chord for soprano and baritone ukulele, both left and right handed!!! FOR FREE.  You know you want to click so just go ahead and do it."></a>
+        <a id="info-toggle" title="About Radio Free Peterborough"></a>
         <div id="rfp-ukulele"></div>
         <div id="rfp-queue"><a id="queue-toggle-inqueue"></a></div>
         <div id="rfp-search"><a id="search-toggle-insearch"></a></div>
+        <div id="rfp-info"></div>
+
         <div id="rfp-recording-cover"></div>
           <div id="rfp-track-details">
             <h1 id="rfp-track-title" ></h1>
@@ -114,14 +121,14 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
             <div id="TODO"  >
             <br/>
             <small>
-            [ TODO:  crank up title trimng like for dead pope society ]
-<br>
+            [TODO: add a div around the right hand button bar and give it a nice clean shadow ]
+            <br>
 
             [ TODO: Add pages for mobile (apps), about (question mark), ukulele (ukulele!) ]
             <br>
             [ TODO: Playlists:  add, reorder, edit + tag, delete, promote ]
             <br>
-            [ TODO: Should allow user to download recording if it is a freebie ]
+            [ TODO: Should allow user to download recording if it is a freebie  - ex: ?mode=recording&id=1064 - bernie martin ]
             <br>
               </small>
           </div>
@@ -150,11 +157,8 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               this.id = id;
 
               // Remove the homepage link from the logo if we are already on the homepage
-              if( $('BODY').hasClass( 'path-frontpage' )) {
+              if( $('BODY').hasClass( 'path-frontpage' ) && !this.mode ) {
 
-
-
-                  console.log( 'have homepage');
                   $('.site-branding__logo-link').removeAttr('href');
                   $('.site-branding__logo-link').css( 'cursor', 'default' );
               }
@@ -193,10 +197,24 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               i = document.createElement( 'img' );
 
               i.src = drupalSettings.rfplisten.images.ukeshow;
-              $(i).css( 'width', '60px' );
-              $(i).css( 'height', '60px');
+              $(i).css( 'width', '50px' );
+              $(i).css( 'height', '50px');
 
               $('#uke-toggle').append( i );
+
+              // Hide / Show info
+              $('#info-toggle').click( parent.infotoggle );
+              i = document.createElement( 'img' );
+
+              i.src = drupalSettings.rfplisten.images.infoshow;
+              $(i).css( 'width', '35px' );
+              $(i).css( 'height', '35px');
+
+              $('#info-toggle').append( i );
+
+
+
+
 
               this.reset_button_bar();
 
@@ -487,9 +505,9 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 //  Add our search interface
                 var search_html = '<div id="rfp-search-wrapper">'
                 + '<select id="rfp-search-for">'
-                  + '<option value="artist">Search by Artist Name</option>'
-                  + '<option value="recording">Search by Recording Title</option>'
-                  + '<option value="track">Search by Track Title</option>'
+                  + '<option value="artist">  Search by Artist Name</option>'
+                  + '<option value="recording">  Search by Recording Title</option>'
+                  + '<option value="track">  Search by Track Title</option>'
                 + '</select>'
                 + '<h3 class="search-label">Search Keywords:</h3>'
                 + '<input type="text" id="rfp-search-keywords">'
@@ -532,15 +550,12 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               $(qtimg).css( 'width', '35px').css( 'height', '35px' );
               $(uketoggle).append( qtimg );
 
-
-
-
               var uke = document.createElement( 'div' );
               uke.innerHTML = '<br/><h2>Free Ukulele Chord Books</h2>';
               uke.innerHTML += "<p>You've always wanted to learn how to play the Ukulele, but never had a chord book. "
-              + "Well now, you do. In fact, you have more than just a chord book: you have a complete chord dictionary for"
+              + "Well now you do. You have more than just a chord book: you have a complete chord dictionary for"
               + " left and right handed ukulele and baritone ukulele!</p><p>"
-              + "These chord books are offered completely free of charge - provided any use of the material within is "
+              + "These chord books are offered completely free of charge provided any use of the material within is "
               + "credited to its original author, Dr. Stephen Luke.  Many thanks to Dr Luke for sharing his skills "
               + "freely with the ukulele-playing world.</p>"
               + "<p>Enjoy!</p>";
@@ -558,6 +573,11 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               $('#rfp-ukulele').append( uketoggle );
               $('#rfp-ukulele').append( uke );
 
+            },
+
+            infotoggle: function () {
+
+                console.log( "TOGGLE INFO PANEL");
             },
 
             rfp_search: function() {
@@ -763,7 +783,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
   				$('#like-button-holder').append( like_wrapper );
 
-          if( this.mode == 'random' ) {
+          if( this.mode == 'random' || this.mode == 'track' ) {
 
                 var recording_id = this.queue[ this.queue_index ].recording;
 
