@@ -80,7 +80,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               if( $('#rfp-ukulele').is( ':visible')) {
                 parent.uketoggle();
               }
-              if( $('#info-toggle').is( ':visible')) {
+              if( $('#rfp-info').is( ':visible')) {
                 parent.infotoggle();
               }
 
@@ -115,7 +115,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
         <div id="rfp-recording-cover"></div>
           <div id="rfp-track-details">
             <h1 id="rfp-track-title" ></h1>
-            <h2><span id="rfp-track-recording-name"></span> - <span id="rfp-track-artist-name"></span></h2>
+            <h2><span id="rfp-track-recording-name"></span><span id="dash"> - </span> <span id="rfp-track-artist-name"></span></h2>
             <div id="like-button-holder"></div>
 
             <div id="TODO"  >
@@ -142,6 +142,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
            init: function() {
 
+              $('#TODO').hide();
               window.rfp = this;
 
       			  var mode = this.get_url_param( 'mode' );
@@ -213,6 +214,8 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               $('#info-toggle').append( i );
 
 
+
+			  console.log( "Queue toggle is at: " + $('#queue-toggle').css('right' ));
 
 
 
@@ -401,7 +404,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 $(qtimg).css( 'width', '35px').css( 'height', '35px' );
                 $(queuetoggle).append( qtimg );
 
-            		$('#rfp-queue').append( queuetoggle );
+            	$('#rfp-queue').append( queuetoggle );
 
                 // And the grippie
                 var grippie = document.createElement( 'div' );
@@ -577,7 +580,57 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
             infotoggle: function () {
 
-                console.log( "TOGGLE INFO PANEL");
+			  $('#rfp-info').empty();
+              $('#rfp-info').animate( { 'width': 'toggle' }, 170 );
+
+
+              // Add back the close button..
+              var infotoggle = $('A#info-toggle' ).clone( true );
+
+              infotoggle.className = 'rfp-in-info-toggle';
+              $(infotoggle).css( 'position', 'relative' );
+              $(infotoggle).css( 'left', '0' );
+              $(infotoggle).css( 'top', 0 );
+
+              $(infotoggle).empty();
+              $(infotoggle).attr( 'title', 'Close the info box' );
+
+              var qtimg = document.createElement( 'img' );
+              qtimg.src = drupalSettings.rfplisten.images.infohide;
+
+              $(qtimg).css( 'width', '35px').css( 'height', '35px' );
+              $(infotoggle).append( qtimg );
+
+              var info = document.createElement( 'div' );
+
+
+			  info.innerHTML = '<br/><h3>About Radio Free Peterborough</h3>';
+			  info.innerHTML += '<p>Founded in the summer of 2004 by long-time Peterborough residents Steve McNabb and Brian Sanderson, '
+				+ 'Radio Free Peterborough has grown from a modest 350 tracks to nearly 13,000 tracks!</p>'
+				+ '<p>RFP\'s mandate is to archive, preserve, promote and develop Peterborough\'s unique'
+				+ ' musical heritage for audiences local and global.  RFP runs on 100% Open Source software and volunteer power.  '
+				+ 'In partnership with Trent Radio 92.7 CFFF FM in Peterborough,  to date RFP has had nearly 85,000 '
+				+ 'hours of FM broadcast time in the local Peterborough area.</p><p>If you have any questions or '
+			    + 'comments, please don\'t hesitate to <a id="contact_us">contact us</a>.</p><p>You can also make '
+			    + 'a tax-deductible donation <a href="https://www.canadahelps.org/dn/14907" target="_blank">by clicking here</a> - '
+			    + 'please select the "Radio Free Peterborough Streaming Fund" on the donation page to earmark your '
+			    + 'donation for RFP.</p>';
+
+			  $('#rfp-info').append( infotoggle );
+			  $('#rfp-info').append( info );
+
+			  $('#contact_us').click( function() {
+
+					var email = 'steve@radiofreepeterborough.ca';
+					var subject = 'Radio Free Peterborough Feedback';
+					var body_message = 'I have something to say about Radio Free Peterborough:' + "\n\n";
+
+					var mailto_link = 'mailto:' + email + '?subject='
+					  + subject + '&body=' + body_message;
+
+					  win = window.open(mailto_link, 'emailWindow');
+					  if (win && win.open && !win.closed) win.close();
+			  });
             },
 
             rfp_search: function() {
@@ -757,7 +810,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
   			  document.spinner.stop();
   			  $(cover).fadeIn();
   			  $('#rfp-track-details').fadeIn( );
-  			  $('#TODO').show();
+  			  //$('#TODO').show();
 
   			}, false );
 
@@ -768,6 +821,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
   			 // Share / Like Button..
   			if( this.queue.length > 0 ) {
+
 
   				var current_trackid = this.queue[ this.queue_index ].nid;
   				var fb_like = '<div class="fb-like" data-href="http://'  + window.location.hostname
@@ -781,7 +835,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
   				like_wrapper.className = 'like-wrapper';
   				like_wrapper.innerHTML = fb_like;
 
-  				$('#like-button-holder').append( like_wrapper );
+  				//$('#like-button-holder').append( like_wrapper );
 
           if( this.mode == 'random' || this.mode == 'track' ) {
 
@@ -800,19 +854,8 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
                 $('#like-button-holder').append( recording_link );
 
-
-
-
-                console.log( 'add a link to play all of  ' + recording_id );
-
           }
-
-
-
-
-
-
-  			}
+  		}
       },
 
       _fetch_track: function( id ) {  // Load our track info..
