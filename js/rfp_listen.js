@@ -31,7 +31,8 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
 (function ($) {
 
-    'use strict';
+   /* 'use strict'; */
+
     $(document).ready(function () {
 
 	  document.title = 'Radio Free Peterborough';
@@ -43,12 +44,12 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 			created: function() {
 
 				  // Add event handler for player - if it gets to the end of the track, switch to next
-				  parent = this;
-				  $('#rfp-hidden-player').on( 'ended', function() {
 
-						var next_index = Number(parent.queue_index) + 1;
-						if( next_index > parent.queue.length - 1 ) { next_index = 0; }
-						parent.queue_skip_to( next_index );
+				  $('#rfp-hidden-player').on( 'ended', function( e ) {
+
+						var next_index = Number(window.rfp.queue_index) + 1;
+						if( next_index > window.rfp.queue.length - 1 ) { next_index = 0; }
+						window.rfp.queue_skip_to( next_index );
 				  });
 
 				  // Keydown handlers..
@@ -56,39 +57,39 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
 						if( event.which == 37 ) { // left arrow
 
-							var next_index = Number(parent.queue_index) - 1;
+							var next_index = Number(window.rfp.queue_index) - 1;
 							if( next_index >= 0 ) { // we are not on the first track
 
-								parent.queue_skip_to( next_index );
+								window.rfp.queue_skip_to( next_index );
 							}
 						}
 						if( event.which == 39 ) { // right arrow
 
-						  var next_index = Number(parent.queue_index) + 1;
-						  if( next_index < parent.queue.length )  {
-                parent.queue_skip_to( next_index );
+						  var next_index = Number(window.rfp.queue_index) + 1;
+						  if( next_index < window.rfp.queue.length )  {
+                window.rfp.queue_skip_to( next_index );
 						  }
 						}
 						if( event.which == 27 ) { // escape
 
 						  if( $('#rfp-queue').is( ':visible' )) {
-                parent.queuetoggle();
+                window.rfp.queuetoggle();
 						  }
 						  if( $('#rfp-search').is( ':visible' )) {
-                parent.searchtoggle();
+                window.rfp.searchtoggle();
 						  }
               if( $('#rfp-ukulele').is( ':visible')) {
-                parent.uketoggle();
+                window.rfp.uketoggle();
               }
               if( $('#rfp-info').is( ':visible')) {
-                parent.infotoggle();
+                window.rfp.infotoggle();
               }
 
 						}
             if( event.which == 13 ) { // enter - if search is open, submit it
 
               if( $('#rfp-search').is( ':visible' )) {
-                parent.rfp_search();
+                window.rfp.rfp_search();
 						  }
             }
 				  });
@@ -107,6 +108,9 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
         <a id="search-toggle" title="Search the catalogue"></a>
         <a id="uke-toggle" title="Every possible Ukulele Chord for soprano and baritone ukulele, both left and right handed!!! FOR FREE.  You know you want to click so just go ahead and do it."></a>
         <a id="info-toggle" title="About Radio Free Peterborough"></a>
+        <!-- static link to apps page -->
+        <a id="rfp-apps" title="Download Free Radio Free Peterborough and Trent Radio Apps" href="/apps" target="_blank"></a>
+
         <div id="rfp-ukulele"></div>
         <div id="rfp-queue"><a id="queue-toggle-inqueue"></a></div>
         <div id="rfp-search"><a id="search-toggle-insearch"></a></div>
@@ -121,15 +125,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
             <div id="TODO"  >
             <br/>
             <small>
-            [TODO: add a div around the right hand button bar and give it a nice clean shadow ]
-            <br>
-
-            [ TODO: Add pages for mobile (apps), about (question mark), ukulele (ukulele!) ]
-            <br>
-            [ TODO: Playlists:  add, reorder, edit + tag, delete, promote ]
-            <br>
-            [ TODO: Should allow user to download recording if it is a freebie  - ex: ?mode=recording&id=1064 - bernie martin ]
-            <br>
+		If you are reading this, unfortunately your browser is not supported.  Try Google Chrome!
               </small>
           </div>
       </div>
@@ -153,7 +149,6 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
               this.queue = []; // our central playback queue - only holds node ids
               this.queue_index = 0;
-              var parent = this;
               this.mode = mode;
               this.id = id;
 
@@ -172,7 +167,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               */
 
               // Hide / Show Queue
-              $('#queue-toggle').click( parent.queuetoggle );
+              $('#queue-toggle').click( window.rfp.queuetoggle );
 
               // set the image for the queue show button
               var i = document.createElement( 'img' );
@@ -184,7 +179,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               $('#queue-toggle').append( i );
 
               // Hide / Show search interface
-              $('#search-toggle').click( parent.searchtoggle );
+              $('#search-toggle').click( window.rfp.searchtoggle );
               // set the image for the queue show button
               var i = document.createElement( 'img' );
               i.src = drupalSettings.rfplisten.images.searchshow;
@@ -194,7 +189,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               $('#search-toggle').append( i );
 
               // Hide / Show Ukulele
-              $('#uke-toggle').click(  parent.uketoggle );
+              $('#uke-toggle').click(  window.rfp.uketoggle );
               i = document.createElement( 'img' );
 
               i.src = drupalSettings.rfplisten.images.ukeshow;
@@ -204,7 +199,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               $('#uke-toggle').append( i );
 
               // Hide / Show info
-              $('#info-toggle').click( parent.infotoggle );
+              $('#info-toggle').click( window.rfp.infotoggle );
               i = document.createElement( 'img' );
 
               i.src = drupalSettings.rfplisten.images.infoshow;
@@ -213,9 +208,16 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
               $('#info-toggle').append( i );
 
+              // Apps Page
+              i = document.createElement( 'img' );
+              i.src = drupalSettings.rfplisten.images.apps;
+              $(i).css( 'width', '30px' );
+              $(i).css( 'height', '30px');
+
+              $('#rfp-apps').append( i );
 
 
-			  console.log( "Queue toggle is at: " + $('#queue-toggle').css('right' ));
+
 
 
 
@@ -247,21 +249,20 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 // grab 25 random songs
                 var data_path  = drupalSettings.rfplisten.datasource_random_tracks;
 				        var rand_count = drupalSettings.rfplisten.datasource_random_tracks_count;
-                parent = this;
 
                 $.get( data_path + rand_count,  function( data ) {
 
-                    parent.reset_queue( JSON.parse( data ));
-                    parent.queue_index = 0;
+                    window.rfp.reset_queue( JSON.parse( data ));
+                    window.rfp.queue_index = 0;
                     document.spinner.stop();
-                    parent.play_queue();
+                    window.rfp.play_queue();
                 });
             },
             init_artist_mode: function( artist_id ) {
 
             	  // Get recordings that match this artist..
             	  var data_path = drupalSettings.rfplisten.datasource_artist  + artist_id;
-            	  var parent = this;
+
             	  $.get( data_path,  function( data ) {
 
               		 var tracks = JSON.parse( data );
@@ -272,10 +273,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               			  return;
               		 }
 
-                    parent.reset_queue( tracks );
-                    parent.queue_index = 0;
+                    window.rfp.reset_queue( tracks );
+                    window.rfp.queue_index = 0;
                     document.spinner.stop();
-                    parent.play_queue();
+                    window.rfp.play_queue();
                 });
             },
 
@@ -283,9 +284,8 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
       				// Can we get this recording?
       				var recording_url = drupalSettings.rfplisten.datasource_recordings_by_id + recording_id + '.json';
-      				var parent = this;
 
-      				$.getJSON( recording_url, function (recording_data) {
+      				$.getJSON( recording_url, function ( recording_data ) {
 
       					var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + recording_id + '.json';
       					$.getJSON( tracks_url, function( tracks ) {
@@ -294,30 +294,29 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
       					  for ( var t in tracks ) {
 
-      						if( !tracks[t].title ) { continue; }
-      						recording_tracks.push( tracks[t] );
+        						if( !tracks[t].title ) { continue; }
+        						recording_tracks.push( tracks[t] );
       					  }
 
-      					  parent.reset_queue( recording_tracks);
-      					  parent.queue_index = 0;
+      					  window.rfp.reset_queue( recording_tracks);
+      					  window.rfp.queue_index = 0;
       					  document.spinner.stop();
-      					  parent.play_queue();
+      					  window.rfp.play_queue();
 
       					}).fail( function() {
       						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
-      						parent.init_random_mode();
+      						window.rfp.init_random_mode();
       					});
       				})
       				.fail( function() {
       					alert("Sorry - we were unable to find a recording with that id. Initializing in random mode instead");
-      					parent.init_random_mode();
+      					window.rfp.init_random_mode();
       				});
             },
 
       			init_track_mode: function( track_id ) {
 
       			  var track_url = drupalSettings.rfplisten.datasource_tracks + track_id + '.json';
-      			  var parent = this;
 
       			  $.getJSON( track_url, function( track ) {
 
@@ -331,27 +330,27 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
         						if( !tracks[t].title ) { continue; }
         						if( tracks[t].nid == track.nid ) {   // If this is our desired track, set queue index to match
-        						  parent.queue_index = counter;
+        						  window.rfp.queue_index = counter;
         						}
 
         						recording_tracks.push( tracks[t] );
         						++counter;
       					  }
 
-      					  parent.reset_queue( recording_tracks);
+      					  window.rfp.reset_queue( recording_tracks);
 
       					  document.spinner.stop();
-      					  parent.play_queue();
-      					  parent.reset_queue_hilight();
-      					  parent.reset_button_bar();
+      					  window.rfp.play_queue();
+      					  window.rfp.reset_queue_hilight();
+      					  window.rfp.reset_button_bar();
 
       					}).fail( function() {
       						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
-      						parent.init_random_mode();
+      						window.rfp.init_random_mode();
       					});
       			  }).fail( function() {
       					alert("Sorry - we were unable to find a track with that id. Initializing in random mode instead");
-      					parent.init_random_mode();
+      					window.rfp.init_random_mode();
       			  });
       			},
 
@@ -418,7 +417,6 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                 tracks.className = 'rfp-queue-tracks';
 
                 var counter = 0;
-        				var parent = this;
 
                 for( var t in this.queue ) {
 
@@ -446,15 +444,15 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                     track.class     = 'rfp-queue-track';
                     track.position  = counter;
 
-                    $(track).on( 'click', function() {
+                    $(track).on( 'click', function( event ) {
 
                     	var id = $(this).attr('id');
                     	var id_chunks = id.split( '_');
                     	var nid = id_chunks[1];
                     	var pos = id_chunks[4];
 
-                      if( pos == parent.queue_index ) { return; } // do nothing if we click on the current track
-                    	parent.queue_skip_to( pos );
+                      if( pos == window.rfp.queue_index ) { return; } // do nothing if we click on the current track
+                    	window.rfp.queue_skip_to( pos );
                     });
 
                     $(track).hover( function() {
@@ -463,7 +461,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                     	var id_chunks = id.split( '_');
                     	var nid = id_chunks[1];
                     	var pos = id_chunks[4];
-                    	if( pos != parent.queue_index ) {  // don't hilight the current track
+                    	if( pos != window.rfp.queue_index ) {  // don't hilight the current track
                     		  $(this).addClass( 'queue-track-hover' );
                     	   }
                       },
@@ -559,7 +557,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
               + "Well now you do. You have more than just a chord book: you have a complete chord dictionary for"
               + " left and right handed ukulele and baritone ukulele!</p><p>"
               + "These chord books are offered completely free of charge provided any use of the material within is "
-              + "credited to its original author, Dr. Stephen Luke.  Many thanks to Dr Luke for sharing his skills "
+              + "credited to its original author, Dr. Stephen Luke.  Many thanks to Doctor Luke for sharing his skills "
               + "freely with the ukulele-playing world.</p>"
               + "<p>Enjoy!</p>";
 
@@ -605,13 +603,14 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
 
 			  info.innerHTML = '<br/><h3>About Radio Free Peterborough</h3>';
-			  info.innerHTML += '<p>Founded in the summer of 2004 by long-time Peterborough residents Steve McNabb and Brian Sanderson, '
-				+ 'Radio Free Peterborough has grown from a modest 350 tracks to nearly 13,000 tracks!</p>'
-				+ '<p>RFP\'s mandate is to archive, preserve, promote and develop Peterborough\'s unique'
-				+ ' musical heritage for audiences local and global.  RFP runs on 100% Open Source software and volunteer power.  '
+			  info.innerHTML +=  '<p>RFP\'s mandate is to preserve and promote Peterborough\'s unique'
+				+ ' musical heritage and make this heritage accessible for audiences local and global.  RFP runs on 100% Open Source software and volunteer power.  '
 				+ 'In partnership with Trent Radio 92.7 CFFF FM in Peterborough,  to date RFP has had nearly 85,000 '
 				+ 'hours of FM broadcast time in the local Peterborough area.</p><p>If you have any questions or '
-			    + 'comments, please don\'t hesitate to <a id="contact_us">contact us</a>.</p><p>You can also make '
+			    + 'comments, please don\'t hesitate to <a id="contact_us">contact us</a>.</p>'
+          + '<p>Founded in the summer of 2004 by long-time Peterborough residents Steve McNabb and Brian Sanderson, '
+  				+ 'Radio Free Peterborough has grown from a modest 350 tracks to nearly 13,000 tracks!</p>'
+          + '<p>You can also make '
 			    + 'a tax-deductible donation <a href="https://www.canadahelps.org/dn/14907" target="_blank">by clicking here</a> - '
 			    + 'please select the "Radio Free Peterborough Streaming Fund" on the donation page to earmark your '
 			    + 'donation for RFP.</p>';
@@ -652,13 +651,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                   return;
                 }
 
-                var parent = this;
                 $.get( url, function( data ) {
 
         					var results_display = document.createElement( 'ul' );
         					results_display.className = 'rfp-search-results';
-
-
 
         					var results =  JSON.parse( data );
         					if( results.length == 0 ) {
@@ -717,19 +713,18 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
             reset_queue_hilight: function() {
 
                 var track_counter   = 0;
-                var parent          = this;
                 var q = $( '#rfp-queue');
 
                 $('.rfp-queue-track').each( function( index, thistrack ) {
 
                     $(thistrack).removeClass( 'queue-current-track' );
 
-                    if( track_counter == parent.queue_index ) {
+                    if( track_counter == window.rfp.queue_index ) {
 
                         $(thistrack).addClass( 'queue-current-track' );
 
                         $(q).animate( {
-                            scrollTop: ($(thistrack).height() * parent.queue_index) - 200
+                            scrollTop: ($(thistrack).height() * window.rfp.queue_index) - 200
                         }, 300 );
                     }
 
@@ -835,7 +830,9 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
   				like_wrapper.className = 'like-wrapper';
   				like_wrapper.innerHTML = fb_like;
 
-  				//$('#like-button-holder').append( like_wrapper );
+          if( window.innerWidth > 600 ) {
+  				      $('#like-button-holder').append( like_wrapper );
+          }
 
           if( this.mode == 'random' || this.mode == 'track' ) {
 
@@ -863,9 +860,9 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
           this.currentTrackId = id;
 
           var data_path = drupalSettings.rfplisten.datasource_tracks + id.toString() + '.json';
-          var parent = this;
+
           $.getJSON(data_path, function( json ) {
-                  parent._init_track( json );
+                  window.rfp._init_track( json );
           });
       },
 
@@ -999,13 +996,4 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
   accessors:  {
 
-      queue_index:        { attribute: {} },
-      playing:            { attribute: {} },
-      artists_by_nid:     { attribute: {} },
-      artists_by_title:   { attribute: {} },
-    }
-	});
-});
-
-
-} ) ( jQuery, Drupal, drupalSettings );
+      queue_index:        { a
