@@ -20,7 +20,7 @@ document.spinner_opts =  {
     fps: 20, // Frames per second when using setTimeout() as a fallback for CSS
     zIndex: 2e9, // The z-index (defaults to 2000000000)
     className: 'spinner', // The CSS class to assign to the spinner
-    top: '50%', // Top position relative to parent
+    top: '38%', // Top position relative to parent
     left: '50%', // Left position relative to parent
     shadow: true, // Whether to render a shadow
     hwaccel: true, // Whether to use hardware acceleration
@@ -31,8 +31,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
 (function ($) {
 
-   /* 'use strict'; */
-
+  /*  'use strict'; */
     $(document).ready(function () {
 
 	  document.title = 'Radio Free Peterborough';
@@ -44,8 +43,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 			created: function() {
 
 				  // Add event handler for player - if it gets to the end of the track, switch to next
-
-				  $('#rfp-hidden-player').on( 'ended', function( e ) {
+				  $('#rfp-hidden-player').on( 'ended', function() {
 
 						var next_index = Number(window.rfp.queue_index) + 1;
 						if( next_index > window.rfp.queue.length - 1 ) { next_index = 0; }
@@ -106,11 +104,9 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
       <div id="rfp-wrapper">
         <a id="queue-toggle" title="Show the playlist"></a>
         <a id="search-toggle" title="Search the catalogue"></a>
-        <a id="uke-toggle" title="Every possible Ukulele Chord for soprano and baritone ukulele, both left and right handed!!! FOR FREE.  You know you want to click so just go ahead and do it."></a>
+        <a id="uke-toggle" title="Every possible Ukulele Chord for soprano and baritone ukulele, both left and right handed. For free."></a>
         <a id="info-toggle" title="About Radio Free Peterborough"></a>
-        <!-- static link to apps page -->
-        <a id="rfp-apps" title="Download Free Radio Free Peterborough and Trent Radio Apps" href="/apps" target="_blank"></a>
-
+        <a id="rfp-apps" href="/apps" title="Free Mobile Apps - put some Peterborough in your pocket!" target="_blank"></a>
         <div id="rfp-ukulele"></div>
         <div id="rfp-queue"><a id="queue-toggle-inqueue"></a></div>
         <div id="rfp-search"><a id="search-toggle-insearch"></a></div>
@@ -122,14 +118,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
             <h2><span id="rfp-track-recording-name"></span><span id="dash"> - </span> <span id="rfp-track-artist-name"></span></h2>
             <div id="like-button-holder"></div>
 
-            <div id="TODO"  >
-            <br/>
-            <small>
-		If you are reading this, unfortunately your browser is not supported.  Try Google Chrome!
-              </small>
+            <div id="unsupported"  >
+            <small>Sorry, it looks like your browser won't load this website for some reason.  Try updating your browser?</small>
           </div>
       </div>
-
       <div id="rfp-buttonbar"></div>
       </div> <!-- end wrapper -->
 		 */
@@ -138,7 +130,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
            init: function() {
 
-              $('#TODO').hide();
+              $('#unsupported').hide();
               window.rfp = this;
 
       			  var mode = this.get_url_param( 'mode' );
@@ -208,18 +200,14 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
               $('#info-toggle').append( i );
 
-              // Apps Page
+              // Apps link
               i = document.createElement( 'img' );
-              i.src = drupalSettings.rfplisten.images.apps;
-              $(i).css( 'width', '30px' );
-              $(i).css( 'height', '30px');
+
+              i.src = drupalSettings.rfplisten.images.appshow;
+              $(i).css( 'width', '28px' );
+              $(i).css( 'height', '28px');
 
               $('#rfp-apps').append( i );
-
-
-
-
-
 
               this.reset_button_bar();
 
@@ -285,7 +273,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
       				// Can we get this recording?
       				var recording_url = drupalSettings.rfplisten.datasource_recordings_by_id + recording_id + '.json';
 
-      				$.getJSON( recording_url, function ( recording_data ) {
+      				$.getJSON( recording_url, function (recording_data) {
 
       					var tracks_url = drupalSettings.rfplisten.datasource_tracks_by_recording + recording_id + '.json';
       					$.getJSON( tracks_url, function( tracks ) {
@@ -304,12 +292,12 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
       					  window.rfp.play_queue();
 
       					}).fail( function() {
-      						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead");
+      						alert("Sorry - we were unable to find any tracks for that recording - Initializing in random mode instead.");
       						window.rfp.init_random_mode();
       					});
       				})
       				.fail( function() {
-      					alert("Sorry - we were unable to find a recording with that id. Initializing in random mode instead");
+      					alert("Sorry - we were unable to find a recording with that id. Initializing in random mode instead.");
       					window.rfp.init_random_mode();
       				});
             },
@@ -418,6 +406,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
                 var counter = 0;
 
+
                 for( var t in this.queue ) {
 
                     var track = document.createElement('li');
@@ -444,7 +433,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
                     track.class     = 'rfp-queue-track';
                     track.position  = counter;
 
-                    $(track).on( 'click', function( event ) {
+                    $(track).on( 'click', function() {
 
                     	var id = $(this).attr('id');
                     	var id_chunks = id.split( '_');
@@ -553,11 +542,11 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
               var uke = document.createElement( 'div' );
               uke.innerHTML = '<br/><h2>Free Ukulele Chord Books</h2>';
-              uke.innerHTML += "<p>You've always wanted to learn how to play the Ukulele, but never had a chord book. "
-              + "Well now you do. You have more than just a chord book: you have a complete chord dictionary for"
-              + " left and right handed ukulele and baritone ukulele!</p><p>"
-              + "These chord books are offered completely free of charge provided any use of the material within is "
-              + "credited to its original author, Dr. Stephen Luke.  Many thanks to Doctor Luke for sharing his skills "
+              uke.innerHTML += "<p>You always wanted to learn how to play the Ukulele, but never had a chord book. "
+              + "Well now you do. More than just a chord book: you have a complete chord dictionary for"
+              + " left and right handed soprano and baritone ukulele!  That's right - EVERY POSSIBLE UKULELE CHORD to the 14th fret.</p><p>"
+              + "These chord books are offered free of charge provided any use of the material within is "
+              + "credited to its original author, Dr. Stephen Luke.  Many thanks to Dr Luke for sharing his skills "
               + "freely with the ukulele-playing world.</p>"
               + "<p>Enjoy!</p>";
 
@@ -603,24 +592,23 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
 
 			  info.innerHTML = '<br/><h3>About Radio Free Peterborough</h3>';
-			  info.innerHTML +=  '<p>RFP\'s mandate is to preserve and promote Peterborough\'s unique'
-				+ ' musical heritage and make this heritage accessible for audiences local and global.  RFP runs on 100% Open Source software and volunteer power.  '
-				+ 'In partnership with Trent Radio 92.7 CFFF FM in Peterborough,  to date RFP has had nearly 85,000 '
-				+ 'hours of FM broadcast time in the local Peterborough area.</p><p>If you have any questions or '
-			    + 'comments, please don\'t hesitate to <a id="contact_us">contact us</a>.</p>'
-          + '<p>Founded in the summer of 2004 by long-time Peterborough residents Steve McNabb and Brian Sanderson, '
-  				+ 'Radio Free Peterborough has grown from a modest 350 tracks to nearly 13,000 tracks!</p>'
-          + '<p>You can also make '
-			    + 'a tax-deductible donation <a href="https://www.canadahelps.org/dn/14907" target="_blank">by clicking here</a> - '
-			    + 'please select the "Radio Free Peterborough Streaming Fund" on the donation page to earmark your '
-			    + 'donation for RFP.</p>';
+			  info.innerHTML +=  '<p>RFP exists to promote and preserve the unique'
+				+ ' musical heritage of Peterborough Ontario for audiences local and global, present and future.</p><p> '
+				+ 'Listen with this website, our free mobile <a href="/apps" target="_blank" title="Download free Radio Free Peterborough and Trent Radio Apps">apps</a> '
+				+ 'or all night every night on Trent Radio 92.7 FM CFFF in Peterborough and surrounding area.</p><p>If you have any questions or '
+			    + 'comments, please don\'t hesitate to <a id="contact_us">contact us</a>.</p><hr/><p>RFP is a volunteer-run project. '
+          +' If you like that sort of thing, you can support our work with '
+			    + 'a tax-deductible donation through Trent Radio <a href="https://www.canadahelps.org/dn/14907" target="_blank">by clicking here</a>.'
+			    + '</p><p>Please select "Radio Free Peterborough Streaming Fund" on the donation page to earmark your '
+			    + 'donation for RFP.  Donations of $50 or more will receive a tax receipt from Trent Radio.</p>';
+
 
 			  $('#rfp-info').append( infotoggle );
 			  $('#rfp-info').append( info );
 
 			  $('#contact_us').click( function() {
 
-					var email = 'steve@radiofreepeterborough.ca';
+					var email = String('steve') + String('@') + String('radiofreepeterborough.ca');
 					var subject = 'Radio Free Peterborough Feedback';
 					var body_message = 'I have something to say about Radio Free Peterborough:' + "\n\n";
 
@@ -628,7 +616,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 					  + subject + '&body=' + body_message;
 
 					  win = window.open(mailto_link, 'emailWindow');
-					  if (win && win.open && !win.closed) win.close();
+					  //if (win && win.open && !win.closed) win.close();
 			  });
             },
 
@@ -655,6 +643,8 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
         					var results_display = document.createElement( 'ul' );
         					results_display.className = 'rfp-search-results';
+
+
 
         					var results =  JSON.parse( data );
         					if( results.length == 0 ) {
@@ -713,6 +703,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
             reset_queue_hilight: function() {
 
                 var track_counter   = 0;
+
                 var q = $( '#rfp-queue');
 
                 $('.rfp-queue-track').each( function( index, thistrack ) {
@@ -755,33 +746,10 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
 		  showCurrentTrack: function() {
 
-  			$('#TODO').hide();
-
-  			var opts = {
-  			  lines: 11 // The number of lines to draw
-  			, length: 10 // The length of each line
-  			, width: 16 // The line thickness
-  			, radius: 42 // The radius of the inner circle
-  			, scale: 0.75 // Scales overall size of the spinner
-  			, corners: 1 // Corner roundness (0..1)
-  			, color: '#000' // #rgb or #rrggbb or array of colors
-  			, opacity: 0.25 // Opacity of the lines
-  			, rotate: 0 // The rotation offset
-  			, direction: 1 // 1: clockwise, -1: counterclockwise
-  			, speed: 1 // Rounds per second
-  			, trail: 60 // Afterglow percentage
-  			, fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
-  			, zIndex: 2e9 // The z-index (defaults to 2000000000)
-  			, className: 'spinner' // The CSS class to assign to the spinner
-  			, top: '50%' // Top position relative to parent
-  			, left: '50%' // Left position relative to parent
-  			, shadow: true // Whether to render a shadow
-  			, hwaccel: true // Whether to use hardware acceleration
-  			, position: 'absolute' // Element positioning
-  			};
+  			$('#unsupported').hide();
 
   			var target = document.getElementById('rfp-wrapper')
-  			document.spinner = new Spinner(opts).spin(target);
+  			document.spinner = new Spinner(document.spinner_opts).spin(target);
 
   			$('#rfp-track-details').hide();
   			$('#rfp-track-title').text( this.currentTrack.title );
@@ -805,7 +773,6 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
   			  document.spinner.stop();
   			  $(cover).fadeIn();
   			  $('#rfp-track-details').fadeIn( );
-  			  //$('#TODO').show();
 
   			}, false );
 
@@ -830,7 +797,7 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
   				like_wrapper.className = 'like-wrapper';
   				like_wrapper.innerHTML = fb_like;
 
-          if( window.innerWidth > 600 ) {
+          if( $(window).width() > 519 ) {
   				      $('#like-button-holder').append( like_wrapper );
           }
 
@@ -996,4 +963,13 @@ document.spinner = new Spinner(document.spinner_opts).spin(document.body);
 
   accessors:  {
 
-      queue_index:        { a
+      queue_index:        { attribute: {} },
+      playing:            { attribute: {} },
+      artists_by_nid:     { attribute: {} },
+      artists_by_title:   { attribute: {} },
+    }
+	});
+});
+
+
+} ) ( jQuery, Drupal, drupalSettings );
